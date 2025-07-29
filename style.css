@@ -1,0 +1,18 @@
+body {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+input, select, button {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+li.get { color: green }
+li.owe { color: red }

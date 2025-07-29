@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ledger</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Ledger</h1>
+  <form id="entry-form">
+    <select id="type">
+      <option value="get">I Get</option>
+      <option value="owe">I Owe</option>
+    </select>
+    <input id="name" placeholder="Name" required>
+    <input id="amount" type="number" placeholder="Amount" required>
+    <input id="reason" placeholder="Reason" required>
+    <button type="submit">Add</button>
+  </form>
+  <ul id="entries"></ul>
+  <script src="ledger.js"></script>
+</body>
+</html>
