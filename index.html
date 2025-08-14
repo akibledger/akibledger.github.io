@@ -3,7 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeonLedger - Personal Finance Manager</title>
+  <title>Akib Ledger - Personal Finance Manager</title>
+  
+  <!-- Fallback inline CSS in case external CSS fails to load -->
+  <style>
+    /* Basic fallback styles */
+    body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: Arial, sans-serif; 
+      background: #0a0a0a; 
+      color: #ffffff; 
+    }
+    .hidden { display: none !important; }
+    .container { min-height: 100vh; }
+    .auth-container { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh; 
+      padding: 2rem; 
+    }
+    .auth-box { 
+      background: rgba(26, 26, 46, 0.9); 
+      border: 1px solid #00d4ff; 
+      border-radius: 20px; 
+      padding: 3rem; 
+      width: 100%; 
+      max-width: 450px; 
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3); 
+    }
+    .logo { text-align: center; margin-bottom: 2rem; }
+    .logo i { font-size: 3rem; color: #00d4ff; margin-bottom: 1rem; }
+    .logo h1 { font-size: 2.5rem; color: #00d4ff; margin: 0; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+    .auth-form h2 { text-align: center; margin-bottom: 2rem; color: #00d4ff; }
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group input { 
+      width: 100%; 
+      padding: 1rem; 
+      background: rgba(255, 255, 255, 0.1); 
+      border: 1px solid #00d4ff; 
+      border-radius: 10px; 
+      color: #ffffff; 
+      font-size: 1rem; 
+      box-sizing: border-box; 
+    }
+    .btn-primary { 
+      width: 100%; 
+      padding: 1rem; 
+      background: #00d4ff; 
+      border: none; 
+      border-radius: 10px; 
+      color: #000000; 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      cursor: pointer; 
+      margin-bottom: 1.5rem; 
+    }
+    .auth-switch { text-align: center; color: rgba(255, 255, 255, 0.7); }
+    .auth-switch a { color: #00d4ff; text-decoration: none; }
+  </style>
+  
+  <!-- External CSS -->
   <link rel="stylesheet" href="style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -14,7 +77,7 @@
       <div class="auth-box">
         <div class="logo">
           <i class="fas fa-book-open"></i>
-          <h1>NeonLedger</h1>
+          <h1>Akib Ledger</h1>
         </div>
         
         <!-- Login Form -->
@@ -64,7 +127,7 @@
         <div class="header-content">
           <div class="logo">
             <i class="fas fa-book-open"></i>
-            <h1>NeonLedger</h1>
+            <h1>Akib Ledger</h1>
           </div>
           <div class="user-info">
             <span id="user-name"></span>
@@ -190,6 +253,25 @@
   <!-- Notification Toast -->
   <div id="toast" class="toast hidden"></div>
 
+  <!-- External JavaScript -->
   <script src="ledger.js"></script>
+  
+  <!-- Fallback script loading check -->
+  <script>
+    // Check if external files loaded properly
+    window.addEventListener('load', function() {
+      // Check if CSS loaded
+      const computedStyle = window.getComputedStyle(document.body);
+      if (computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)' || computedStyle.backgroundColor === 'initial') {
+        console.warn('External CSS may not have loaded properly');
+      }
+      
+      // Check if JS loaded
+      if (typeof ledger === 'undefined') {
+        console.error('JavaScript file failed to load');
+        document.body.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ff0000;"><h1>Error Loading Files</h1><p>Please check your internet connection and refresh the page.</p></div>';
+      }
+    });
+  </script>
 </body>
 </html>

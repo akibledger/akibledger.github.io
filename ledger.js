@@ -1,5 +1,5 @@
-// NeonLedger - Personal Finance Manager
-class NeonLedger {
+// Akib Ledger - Personal Finance Manager
+class AkibLedger {
   constructor() {
     this.currentUser = null;
     this.users = JSON.parse(localStorage.getItem('users') || '[]');
@@ -378,7 +378,7 @@ class NeonLedger {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `neonledger_${this.currentUser.name}_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `akibledger_${this.currentUser.name}_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -414,7 +414,7 @@ class NeonLedger {
 // Initialize the application
 let ledger;
 document.addEventListener('DOMContentLoaded', () => {
-  ledger = new NeonLedger();
+  ledger = new AkibLedger();
 });
 
 // Add some CSS for the no-entries state

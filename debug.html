@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug - Akib Ledger</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #0a0a0a; 
+      color: #ffffff; 
+      padding: 2rem; 
+    }
+    .debug-section { 
+      background: #1a1a2e; 
+      border: 1px solid #00d4ff; 
+      border-radius: 10px; 
+      padding: 1rem; 
+      margin: 1rem 0; 
+    }
+    .success { color: #00ff88; }
+    .error { color: #ff0080; }
+    .warning { color: #ff6b35; }
+  </style>
+</head>
+<body>
+  <h1>Akib Ledger - Debug Page</h1>
+  
+  <div class="debug-section">
+    <h2>File Loading Status</h2>
+    <div id="css-status">CSS Status: Checking...</div>
+    <div id="js-status">JavaScript Status: Checking...</div>
+    <div id="font-status">Font Awesome Status: Checking...</div>
+  </div>
+  
+  <div class="debug-section">
+    <h2>Browser Information</h2>
+    <div>User Agent: <span id="user-agent"></span></div>
+    <div>Platform: <span id="platform"></span></div>
+    <div>Cookies Enabled: <span id="cookies"></span></div>
+    <div>Local Storage: <span id="local-storage"></span></div>
+  </div>
+  
+  <div class="debug-section">
+    <h2>File Paths</h2>
+    <div>Current URL: <span id="current-url"></span></div>
+    <div>CSS Path: <span id="css-path"></span></div>
+    <div>JS Path: <span id="js-path"></span></div>
+  </div>
+  
+  <div class="debug-section">
+    <h2>Actions</h2>
+    <button onclick="testCSS()">Test CSS Loading</button>
+    <button onclick="testJS()">Test JavaScript Loading</button>
+    <button onclick="clearCache()">Clear Browser Cache</button>
+    <button onclick="location.reload()">Reload Page</button>
+  </div>
+  
+  <div class="debug-section">
+    <h2>Links</h2>
+    <a href="index.html">Main Application</a> | 
+    <a href="style.css">View CSS File</a> | 
+    <a href="ledger.js">View JavaScript File</a>
+  </div>
+
+  <script>
+    // Display browser info
+    document.getElementById('user-agent').textContent = navigator.userAgent;
+    document.getElementById('platform').textContent = navigator.platform;
+    document.getElementById('cookies').textContent = navigator.cookieEnabled ? 'Yes' : 'No';
+    document.getElementById('local-storage').textContent = typeof(Storage) !== "undefined" ? 'Available' : 'Not Available';
+    document.getElementById('current-url').textContent = window.location.href;
+    document.getElementById('css-path').textContent = window.location.origin + window.location.pathname.replace('debug.html', 'style.css');
+    document.getElementById('js-path').textContent = window.location.origin + window.location.pathname.replace('debug.html', 'ledger.js');
+    
+    // Test CSS loading
+    function testCSS() {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'style.css';
+      link.onload = function() {
+        document.getElementById('css-status').innerHTML = 'CSS Status: <span class="success">Loaded Successfully</span>';
+      };
+      link.onerror = function() {
+        document.getElementById('css-status').innerHTML = 'CSS Status: <span class="error">Failed to Load</span>';
+      };
+      document.head.appendChild(link);
+    }
+    
+    // Test JavaScript loading
+    function testJS() {
+      const script = document.createElement('script');
+      script.src = 'ledger.js';
+      script.onload = function() {
+        document.getElementById('js-status').innerHTML = 'JavaScript Status: <span class="success">Loaded Successfully</span>';
+      };
+      script.onerror = function() {
+        document.getElementById('js-status').innerHTML = 'JavaScript Status: <span class="error">Failed to Load</span>';
+      };
+      document.head.appendChild(script);
+    }
+    
+    // Test Font Awesome
+    function testFontAwesome() {
+      const testElement = document.createElement('i');
+      testElement.className = 'fas fa-check';
+      testElement.style.fontSize = '2rem';
+      testElement.style.color = '#00ff88';
+      document.body.appendChild(testElement);
+      
+      // Check if the icon renders properly
+      setTimeout(() => {
+        const computedStyle = window.getComputedStyle(testElement, '::before');
+        if (computedStyle.content !== 'none') {
+          document.getElementById('font-status').innerHTML = 'Font Awesome Status: <span class="success">Working</span>';
+        } else {
+          document.getElementById('font-status').innerHTML = 'Font Awesome Status: <span class="warning">May not be working</span>';
+        }
+        document.body.removeChild(testElement);
+      }, 100);
+    }
+    
+    // Clear cache
+    function clearCache() {
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            caches.delete(name);
+          });
+        });
+      }
+      localStorage.clear();
+      sessionStorage.clear();
+      alert('Cache cleared! Please reload the page.');
+    }
+    
+    // Auto-test on load
+    window.addEventListener('load', function() {
+      setTimeout(testCSS, 500);
+      setTimeout(testJS, 1000);
+      setTimeout(testFontAwesome, 1500);
+    });
+  </script>
+</body>
+</html>
