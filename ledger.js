@@ -1,8 +1,8 @@
 // Akib Ledger - Personal Finance Manager
 class AkibLedger {
   constructor() {
-    this.currentUser = null;
-    this.users = JSON.parse(localStorage.getItem('users') || '[]');
+    this.isEditingEnabled = false;
+    this.accessKey = 'akib2024'; // Default access key - change this to your preferred key
     this.entries = [];
     this.filteredEntries = [];
     
@@ -11,36 +11,26 @@ class AkibLedger {
 
   init() {
     this.setupEventListeners();
-    this.checkAuthStatus();
+    this.loadEntries();
     this.setCurrentDate();
+    this.checkAccessKey();
   }
 
   setupEventListeners() {
-    // Auth form switches
-    document.getElementById('show-signup').addEventListener('click', (e) => {
+    // Access key form
+    document.getElementById('access-key-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      this.showForm('signup');
+      this.handleAccessKey();
     });
 
-    document.getElementById('show-login').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.showForm('login');
+    // View only button
+    document.getElementById('view-only-btn').addEventListener('click', () => {
+      this.enableViewOnly();
     });
 
-    // Auth form submissions
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleLogin();
-    });
-
-    document.getElementById('signup-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleSignup();
-    });
-
-    // Logout
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      this.logout();
+    // Lock editing button
+    document.getElementById('lock-btn').addEventListener('click', () => {
+      this.lockEditing();
     });
 
     // Entry form
@@ -55,133 +45,102 @@ class AkibLedger {
     document.getElementById('search-entries').addEventListener('input', () => this.filterEntries());
   }
 
-  showForm(formType) {
-    document.querySelectorAll('.auth-form').forEach(form => {
-      form.classList.remove('active');
-    });
-    
-    if (formType === 'signup') {
-      document.getElementById('signup-form').classList.add('active');
-    } else {
-      document.getElementById('login-form').classList.add('active');
-    }
-  }
-
   setCurrentDate() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('date').value = today;
   }
 
-  checkAuthStatus() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser) {
-      this.currentUser = currentUser;
-      this.loadUserEntries();
-      this.showApp();
+  checkAccessKey() {
+    // Check if access key is stored in session storage
+    const storedKey = sessionStorage.getItem('akibLedgerAccessKey');
+    if (storedKey === this.accessKey) {
+      this.enableEditing();
     } else {
-      this.showAuth();
+      this.showApp();
     }
   }
 
-  showAuth() {
-    document.getElementById('auth-container').classList.remove('hidden');
+  handleAccessKey() {
+    const inputKey = document.getElementById('access-key').value.trim();
+    
+    if (inputKey === this.accessKey) {
+      sessionStorage.setItem('akibLedgerAccessKey', inputKey);
+      this.enableEditing();
+      this.showToast('Access granted! Editing is now enabled.', 'success');
+    } else if (inputKey === '') {
+      this.enableViewOnly();
+    } else {
+      this.showToast('Invalid access key!', 'error');
+      document.getElementById('access-key').value = '';
+    }
+  }
+
+  enableViewOnly() {
+    this.isEditingEnabled = false;
+    sessionStorage.removeItem('akibLedgerAccessKey');
+    this.showApp();
+    this.showToast('Viewing in read-only mode.', 'success');
+  }
+
+  enableEditing() {
+    this.isEditingEnabled = true;
+    this.showApp();
+    this.showToast('Editing mode enabled!', 'success');
+  }
+
+  lockEditing() {
+    this.isEditingEnabled = false;
+    sessionStorage.removeItem('akibLedgerAccessKey');
+    document.getElementById('access-key-container').classList.remove('hidden');
     document.getElementById('app-container').classList.add('hidden');
+    document.getElementById('access-key').value = '';
+    this.showToast('Editing locked. Enter access key to unlock.', 'success');
   }
 
   showApp() {
-    document.getElementById('auth-container').classList.add('hidden');
+    document.getElementById('access-key-container').classList.add('hidden');
     document.getElementById('app-container').classList.remove('hidden');
-    document.getElementById('user-name').textContent = this.currentUser.name;
+    
+    // Update UI based on editing mode
+    this.updateEditingUI();
     this.updateStats();
     this.renderEntries();
   }
 
-  handleSignup() {
-    const name = document.getElementById('signup-name').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value;
-    const confirmPassword = document.getElementById('signup-confirm').value;
-
-    if (password !== confirmPassword) {
-      this.showToast('Passwords do not match!', 'error');
-      return;
-    }
-
-    if (password.length < 6) {
-      this.showToast('Password must be at least 6 characters!', 'error');
-      return;
-    }
-
-    if (this.users.find(user => user.email === email)) {
-      this.showToast('User already exists!', 'error');
-      return;
-    }
-
-    const newUser = {
-      id: Date.now().toString(),
-      name,
-      email,
-      password: this.hashPassword(password),
-      createdAt: new Date().toISOString()
-    };
-
-    this.users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(this.users));
+  updateEditingUI() {
+    const accessStatus = document.getElementById('access-status');
+    const entryFormContainer = document.getElementById('entry-form-container');
+    const appContainer = document.getElementById('app-container');
     
-    this.showToast('Account created successfully!', 'success');
-    this.showForm('login');
-    
-    // Clear form
-    document.getElementById('signup-form').reset();
-  }
-
-  handleLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-
-    const user = this.users.find(u => u.email === email && u.password === this.hashPassword(password));
-    
-    if (user) {
-      this.currentUser = { id: user.id, name: user.name, email: user.email };
-      localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-      this.loadUserEntries();
-      this.showApp();
-      this.showToast(`Welcome back, ${user.name}!`, 'success');
+    if (this.isEditingEnabled) {
+      accessStatus.textContent = 'Editing Enabled';
+      accessStatus.className = '';
+      entryFormContainer.classList.remove('hidden');
+      appContainer.classList.remove('view-only');
     } else {
-      this.showToast('Invalid credentials!', 'error');
+      accessStatus.textContent = 'View Only';
+      accessStatus.className = 'locked';
+      entryFormContainer.classList.add('hidden');
+      appContainer.classList.add('view-only');
     }
   }
 
-  logout() {
-    this.currentUser = null;
-    localStorage.removeItem('currentUser');
-    this.entries = [];
-    this.showAuth();
-    this.showToast('Logged out successfully!', 'success');
-  }
-
-  hashPassword(password) {
-    // Simple hash for demo purposes - in production, use proper hashing
-    let hash = 0;
-    for (let i = 0; i < password.length; i++) {
-      const char = password.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return hash.toString();
-  }
-
-  loadUserEntries() {
-    const userEntries = JSON.parse(localStorage.getItem(`entries_${this.currentUser.id}`) || '[]');
-    this.entries = userEntries;
+  loadEntries() {
+    const storedEntries = localStorage.getItem('akibLedgerEntries');
+    this.entries = storedEntries ? JSON.parse(storedEntries) : [];
     this.filteredEntries = [...this.entries];
   }
 
-  saveUserEntries() {
-    localStorage.setItem(`entries_${this.currentUser.id}`, JSON.stringify(this.entries));
+  saveEntries() {
+    localStorage.setItem('akibLedgerEntries', JSON.stringify(this.entries));
   }
 
   addEntry() {
+    if (!this.isEditingEnabled) {
+      this.showToast('Access denied! Enter access key to edit.', 'error');
+      return;
+    }
+
     const type = document.getElementById('type').value;
     const name = document.getElementById('name').value.trim();
     const amount = parseFloat(document.getElementById('amount').value);
@@ -206,7 +165,7 @@ class AkibLedger {
     };
 
     this.entries.unshift(entry);
-    this.saveUserEntries();
+    this.saveEntries();
     this.updateStats();
     this.filterEntries();
     this.renderEntries();
@@ -219,9 +178,14 @@ class AkibLedger {
   }
 
   deleteEntry(entryId) {
+    if (!this.isEditingEnabled) {
+      this.showToast('Access denied! Enter access key to edit.', 'error');
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this entry?')) {
       this.entries = this.entries.filter(entry => entry.id !== entryId);
-      this.saveUserEntries();
+      this.saveEntries();
       this.updateStats();
       this.filterEntries();
       this.renderEntries();
@@ -230,6 +194,11 @@ class AkibLedger {
   }
 
   editEntry(entryId) {
+    if (!this.isEditingEnabled) {
+      this.showToast('Access denied! Enter access key to edit.', 'error');
+      return;
+    }
+
     const entry = this.entries.find(e => e.id === entryId);
     if (!entry) return;
 
@@ -302,7 +271,7 @@ class AkibLedger {
         <div class="entry-category">
           ${entry.category}
         </div>
-        <div class="entry-actions">
+        <div class="entry-actions ${!this.isEditingEnabled ? 'hidden' : ''}">
           <button class="btn-edit" onclick="ledger.editEntry('${entry.id}')" title="Edit">
             <i class="fas fa-edit"></i>
           </button>
@@ -368,17 +337,23 @@ class AkibLedger {
 
   // Export functionality
   exportData() {
+    if (!this.isEditingEnabled) {
+      this.showToast('Access denied! Enter access key to export data.', 'error');
+      return;
+    }
+
     const data = {
-      user: this.currentUser,
       entries: this.entries,
-      exportDate: new Date().toISOString()
+      exportDate: new Date().toISOString(),
+      totalReceivables: this.entries.filter(e => e.type === 'get').reduce((sum, e) => sum + e.amount, 0),
+      totalPayables: this.entries.filter(e => e.type === 'owe').reduce((sum, e) => sum + e.amount, 0)
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `akibledger_${this.currentUser.name}_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `akibledger_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -389,13 +364,18 @@ class AkibLedger {
 
   // Import functionality
   importData(file) {
+    if (!this.isEditingEnabled) {
+      this.showToast('Access denied! Enter access key to import data.', 'error');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
         if (data.entries && Array.isArray(data.entries)) {
           this.entries = [...this.entries, ...data.entries];
-          this.saveUserEntries();
+          this.saveEntries();
           this.updateStats();
           this.filterEntries();
           this.renderEntries();
@@ -408,6 +388,18 @@ class AkibLedger {
       }
     };
     reader.readAsText(file);
+  }
+
+  // Change access key (admin function)
+  changeAccessKey(newKey) {
+    if (newKey && newKey.length >= 4) {
+      this.accessKey = newKey;
+      this.showToast('Access key changed successfully!', 'success');
+      return true;
+    } else {
+      this.showToast('Access key must be at least 4 characters!', 'error');
+      return false;
+    }
   }
 }
 

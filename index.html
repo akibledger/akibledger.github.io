@@ -17,14 +17,14 @@
     }
     .hidden { display: none !important; }
     .container { min-height: 100vh; }
-    .auth-container { 
+    .access-key-container { 
       display: flex; 
       align-items: center; 
       justify-content: center; 
       min-height: 100vh; 
       padding: 2rem; 
     }
-    .auth-box { 
+    .access-key-box { 
       background: rgba(26, 26, 46, 0.9); 
       border: 1px solid #00d4ff; 
       border-radius: 20px; 
@@ -32,13 +32,12 @@
       width: 100%; 
       max-width: 450px; 
       box-shadow: 0 0 30px rgba(0, 212, 255, 0.3); 
+      text-align: center;
     }
-    .logo { text-align: center; margin-bottom: 2rem; }
+    .logo { margin-bottom: 2rem; }
     .logo i { font-size: 3rem; color: #00d4ff; margin-bottom: 1rem; }
     .logo h1 { font-size: 2.5rem; color: #00d4ff; margin: 0; }
-    .auth-form { display: none; }
-    .auth-form.active { display: block; }
-    .auth-form h2 { text-align: center; margin-bottom: 2rem; color: #00d4ff; }
+    .access-key-form h2 { margin-bottom: 2rem; color: #00d4ff; }
     .input-group { margin-bottom: 1.5rem; }
     .input-group input { 
       width: 100%; 
@@ -62,8 +61,11 @@
       cursor: pointer; 
       margin-bottom: 1.5rem; 
     }
-    .auth-switch { text-align: center; color: rgba(255, 255, 255, 0.7); }
-    .auth-switch a { color: #00d4ff; text-decoration: none; }
+    .view-only-notice { 
+      text-align: center; 
+      color: rgba(255, 255, 255, 0.7); 
+      margin-top: 1rem; 
+    }
   </style>
   
   <!-- External CSS -->
@@ -72,50 +74,27 @@
 </head>
 <body>
   <div class="container">
-    <!-- Auth Container -->
-    <div id="auth-container" class="auth-container">
-      <div class="auth-box">
+    <!-- Access Key Container -->
+    <div id="access-key-container" class="access-key-container">
+      <div class="access-key-box">
         <div class="logo">
           <i class="fas fa-book-open"></i>
           <h1>Akib Ledger</h1>
         </div>
         
-        <!-- Login Form -->
-        <form id="login-form" class="auth-form active">
-          <h2>Welcome Back</h2>
+        <form id="access-key-form" class="access-key-form">
+          <h2>Enter Access Key</h2>
+          <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem;">
+            View the ledger publicly or enter your access key to edit entries
+          </p>
           <div class="input-group">
-            <i class="fas fa-user"></i>
-            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="access-key" placeholder="Enter access key (optional)" autocomplete="off">
           </div>
-          <div class="input-group">
-            <i class="fas fa-lock"></i>
-            <input type="password" id="login-password" placeholder="Password" required>
-          </div>
-          <button type="submit" class="btn-primary">Login</button>
-          <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
-        </form>
-
-        <!-- Signup Form -->
-        <form id="signup-form" class="auth-form">
-          <h2>Create Account</h2>
-          <div class="input-group">
-            <i class="fas fa-user"></i>
-            <input type="text" id="signup-name" placeholder="Full Name" required>
-          </div>
-          <div class="input-group">
-            <i class="fas fa-envelope"></i>
-            <input type="email" id="signup-email" placeholder="Email" required>
-          </div>
-          <div class="input-group">
-            <i class="fas fa-lock"></i>
-            <input type="password" id="signup-password" placeholder="Password" required>
-          </div>
-          <div class="input-group">
-            <i class="fas fa-lock"></i>
-            <input type="password" id="signup-confirm" placeholder="Confirm Password" required>
-          </div>
-          <button type="submit" class="btn-primary">Sign Up</button>
-          <p class="auth-switch">Already have an account? <a href="#" id="show-login">Login</a></p>
+          <button type="submit" class="btn-primary">Unlock Editing</button>
+          <button type="button" id="view-only-btn" class="btn-secondary">View Only</button>
+          <p class="view-only-notice">
+            <i class="fas fa-eye"></i> Anyone can view the ledger
+          </p>
         </form>
       </div>
     </div>
@@ -130,9 +109,9 @@
             <h1>Akib Ledger</h1>
           </div>
           <div class="user-info">
-            <span id="user-name"></span>
-            <button id="logout-btn" class="btn-secondary">
-              <i class="fas fa-sign-out-alt"></i> Logout
+            <span id="access-status"></span>
+            <button id="lock-btn" class="btn-secondary">
+              <i class="fas fa-lock"></i> Lock/Unlock Editing
             </button>
           </div>
         </div>
@@ -170,8 +149,8 @@
           </div>
         </div>
 
-        <!-- Add Entry Form -->
-        <div class="entry-form-container">
+        <!-- Add Entry Form (Hidden by default) -->
+        <div id="entry-form-container" class="entry-form-container hidden">
           <h2>Add New Entry</h2>
           <form id="entry-form" class="entry-form">
             <div class="form-row">

@@ -4,10 +4,11 @@ A modern, neon-themed personal finance management system built with HTML, CSS, a
 
 ## Features
 
-### Authentication System
-- User registration and login with email and password
-- Secure password-protected access to personal ledgers
-- User data isolation and session management
+### Access Control System
+- **Public Viewing**: Anyone can view the ledger without authentication
+- **Protected Editing**: Requires access key to add, edit, or delete entries
+- **Session Management**: Access key persists during browser session
+- **Secure Operations**: All modifications require valid access key
 
 ### Ledger Management
 - Track money you're owed (Receivables) and money you owe (Payables)
@@ -23,8 +24,8 @@ A modern, neon-themed personal finance management system built with HTML, CSS, a
 
 ### Advanced Features
 - Filter transactions by type, category, or search terms
-- Edit and delete existing entries
-- Export and import data as JSON files
+- Edit and delete existing entries (with access key)
+- Export and import data as JSON files (with access key)
 - Toast notifications for user feedback
 
 ## Getting Started
@@ -36,23 +37,28 @@ A modern, neon-themed personal finance management system built with HTML, CSS, a
 ### Installation
 1. Clone or download this repository
 2. Open `index.html` in your web browser
-3. Start using NeonLedger immediately!
+3. Start using Akib Ledger immediately!
 
-### First Time Setup
-1. Click "Sign Up" and fill in your details
-2. Use a valid email format
-3. Set password (minimum 6 characters)
-4. Begin adding your financial transactions
+### Access Control
+1. **View Only**: Click "View Only" to browse the ledger without editing
+2. **Full Access**: Enter the access key to unlock editing capabilities
+3. **Default Key**: The default access key is `akib2024` (change this in the code)
 
 ## Usage Guide
 
-### Adding Transactions
-1. Select transaction type: "I Get (+)" for money owed to you, "I Owe (-)" for money you owe
-2. Enter person/entity name, amount, reason, and date
-3. Choose category from Personal, Business, Loan, Rent, Utilities, or Other
-4. Click "Add Entry" to save
+### Viewing the Ledger
+- **Public Access**: Anyone can view all transactions and statistics
+- **No Login Required**: Simply click "View Only" to browse
+- **Real-time Updates**: See live totals and balances
 
-### Managing Entries
+### Adding Transactions (Requires Access Key)
+1. Enter the access key to unlock editing
+2. Select transaction type: "I Get (+)" for money owed to you, "I Owe (-)" for money you owe
+3. Enter person/entity name, amount, reason, and date
+4. Choose category from Personal, Business, Loan, Rent, Utilities, or Other
+5. Click "Add Entry" to save
+
+### Managing Entries (Requires Access Key)
 - Edit: Click the edit button to modify an entry
 - Delete: Click the delete button to remove an entry
 - Filter: Use dropdown menus for transaction types or categories
@@ -62,6 +68,22 @@ A modern, neon-themed personal finance management system built with HTML, CSS, a
 - Total Receivable: Sum of all money owed to you
 - Total Payable: Sum of all money you owe
 - Net Balance: Your current financial position
+
+## Access Key Management
+
+### Default Access Key
+The default access key is `akib2024`. To change this:
+
+1. Open `ledger.js`
+2. Find the line: `this.accessKey = 'akib2024';`
+3. Change `akib2024` to your preferred key
+4. Save the file
+
+### Security Features
+- Access key is stored in session storage (cleared when browser closes)
+- No persistent login required
+- Easy to lock/unlock editing as needed
+- Access key can be changed programmatically
 
 ## Theme Customization
 
@@ -82,17 +104,17 @@ The neon theme uses CSS custom properties that can be easily modified:
 
 - All data stored locally in your browser
 - No cloud storage - your information never leaves your device
-- Passwords are hashed before storage
-- Each user's data is completely separate
+- Access key provides simple but effective protection
+- Data persists across browser sessions
 
 ## Data Management
 
-### Export Data
+### Export Your Data (Requires Access Key)
 - Export all data as JSON files
-- Includes transaction history and user information
+- Includes transaction history and summary statistics
 - Perfect for backups or transferring to other systems
 
-### Import Data
+### Import Data (Requires Access Key)
 - Import previously exported JSON files
 - Merge with existing data or start fresh
 - Maintains data integrity and formatting
@@ -114,6 +136,7 @@ The neon theme uses CSS custom properties that can be easily modified:
 
 ## Future Enhancements
 
+- Multiple access keys for different permission levels
 - Cloud sync for data backup
 - Multi-currency support
 - Charts and analytics

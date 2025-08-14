@@ -35,8 +35,8 @@ body {
   display: none !important;
 }
 
-/* Authentication Container */
-.auth-container {
+/* Access Key Container */
+.access-key-container {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,7 +45,7 @@ body {
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
 }
 
-.auth-box {
+.access-key-box {
   background: var(--card-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-glow);
@@ -56,9 +56,10 @@ body {
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
   position: relative;
   overflow: hidden;
+  text-align: center;
 }
 
-.auth-box::before {
+.access-key-box::before {
   content: '';
   position: absolute;
   top: 0;
@@ -69,7 +70,7 @@ body {
   transition: left 0.5s;
 }
 
-.auth-box:hover::before {
+.access-key-box:hover::before {
   left: 100%;
 }
 
@@ -94,20 +95,20 @@ body {
   font-weight: 700;
 }
 
-/* Auth Forms */
-.auth-form {
-  display: none;
-}
-
-.auth-form.active {
-  display: block;
-}
-
-.auth-form h2 {
+/* Access Key Form */
+.access-key-form h2 {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   color: var(--neon-blue);
   font-size: 1.8rem;
+}
+
+.access-key-form p {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .input-group {
@@ -115,24 +116,16 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.input-group i {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--neon-blue);
-  z-index: 2;
-}
-
 .input-group input {
   width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
+  padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-glow);
   border-radius: 10px;
   color: #ffffff;
   font-size: 1rem;
   transition: all 0.3s ease;
+  text-align: center;
 }
 
 .input-group input:focus {
@@ -157,7 +150,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .btn-primary:hover {
@@ -165,20 +158,34 @@ body {
   box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
 }
 
-.auth-switch {
+.btn-secondary {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-glow);
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--neon-blue);
+}
+
+.view-only-notice {
   text-align: center;
   color: rgba(255, 255, 255, 0.7);
+  margin-top: 1rem;
+  font-size: 0.9rem;
 }
 
-.auth-switch a {
-  color: var(--neon-blue);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.3s ease;
-}
-
-.auth-switch a:hover {
-  color: var(--neon-purple);
+.view-only-notice i {
+  color: var(--neon-green);
+  margin-right: 0.5rem;
 }
 
 /* Main App Container */
@@ -221,27 +228,14 @@ body {
   gap: 1rem;
 }
 
-.user-info span {
-  color: var(--neon-blue);
+#access-status {
+  color: var(--neon-green);
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.btn-secondary {
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-glow);
-  border-radius: 8px;
-  color: #ffffff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--neon-blue);
+#access-status.locked {
+  color: var(--neon-orange);
 }
 
 /* Dashboard */
@@ -526,6 +520,10 @@ body {
   gap: 0.5rem;
 }
 
+.entry-actions.hidden {
+  display: none;
+}
+
 .btn-edit,
 .btn-delete {
   padding: 0.5rem;
@@ -545,6 +543,15 @@ body {
 .btn-delete:hover {
   background: rgba(255, 0, 128, 0.2);
   border-color: var(--neon-pink);
+}
+
+/* View Only Mode */
+.view-only .entry-actions {
+  display: none;
+}
+
+.view-only .entry-form-container {
+  display: none;
 }
 
 /* Toast Notifications */
@@ -580,7 +587,7 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .auth-box {
+  .access-key-box {
     padding: 2rem;
     margin: 1rem;
   }
