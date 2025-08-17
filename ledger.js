@@ -78,6 +78,21 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
+// Add logic for 'I don't remember' date option
+const dateInput = document.getElementById('date');
+const dateUnknown = document.getElementById('date-unknown');
+if (dateInput && dateUnknown) {
+  dateUnknown.addEventListener('change', () => {
+    if (dateUnknown.checked) {
+      dateInput.disabled = true;
+      dateInput.value = '';
+    } else {
+      dateInput.disabled = false;
+      setCurrentDate();
+    }
+  });
+}
+
 if (entryForm) {
   entryForm.addEventListener("submit", async e => {
     e.preventDefault();
@@ -89,9 +104,12 @@ if (entryForm) {
     const name = document.getElementById("name").value.trim();
     const amount = parseFloat(document.getElementById("amount").value);
     const reason = document.getElementById("reason").value.trim();
-    const date = document.getElementById("date").value;
+    let date = dateInput ? dateInput.value : '';
+    if (dateUnknown && dateUnknown.checked) {
+      date = "I don't remember";
+    }
     const category = document.getElementById("category").value;
-    if (!name || !amount || !reason || !date) {
+    if (!name || !amount || !reason || (!date && !dateUnknown.checked)) {
       showToast("Please fill all required fields!", "error");
       return;
     }
@@ -110,6 +128,8 @@ if (entryForm) {
       showToast("Entry added!", "success");
       entryForm.reset();
       setCurrentDate();
+      if (dateUnknown) dateUnknown.checked = false;
+      if (dateInput) dateInput.disabled = false;
       loadEntries();
     } catch (err) {
       showToast(err.message, "error");
@@ -117,7 +137,16 @@ if (entryForm) {
   });
 }
 
-let allRequests = [];
+// Filter controls
+const filterType = document.getElementById('filter-type');
+const filterCategory = document.getElementById('filter-category');
+const searchEntries = document.getElementById('search-entries');
+
+let allEntries = [];
+
+if (filterType) filterType.addEventListener('change', applyFilters);
+if (filterCategory) filterCategory.addEventListener('change', applyFilters);
+if (searchEntries) searchEntries.addEventListener('input', applyFilters);
 
 async function loadEntries() {
   if (entriesList) entriesList.innerHTML = "<div>Loading...</div>";
@@ -125,23 +154,42 @@ async function loadEntries() {
   if (entriesArchiveList) entriesArchiveList.innerHTML = "<div>Loading...</div>";
   const q = query(ledgerCollection, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
-  const entries = [];
+  allEntries = [];
   allRequests = [];
   snapshot.forEach(docSnap => {
     const entry = { id: docSnap.id, ...docSnap.data() };
-    entries.push(entry);
+    allEntries.push(entry);
     if (entry.confirmationRequests && entry.confirmationRequests.length > 0 && entry.status !== 'paid') {
       allRequests.push({ entryId: entry.id, requests: entry.confirmationRequests });
     }
   });
-  // Split into ongoing and archive
-  const ongoing = entries.filter(e => e.status !== 'paid');
-  const archive = entries.filter(e => e.status === 'paid');
-  renderEntries(ongoing, entriesOngoingList, false);
-  renderEntries(archive, entriesArchiveList, true);
-  updateStats(entries);
+  applyFilters();
+  updateStats(allEntries);
   updateAdminNotification();
 }
+
+function applyFilters() {
+  let filtered = allEntries.slice();
+  const typeVal = filterType ? filterType.value : 'all';
+  const catVal = filterCategory ? filterCategory.value : 'all';
+  const searchVal = searchEntries ? searchEntries.value.trim().toLowerCase() : '';
+
+  if (typeVal !== 'all') filtered = filtered.filter(e => e.type === typeVal);
+  if (catVal !== 'all') filtered = filtered.filter(e => e.category === catVal);
+  if (searchVal) {
+    filtered = filtered.filter(e =>
+      (e.name && e.name.toLowerCase().includes(searchVal)) ||
+      (e.reason && e.reason.toLowerCase().includes(searchVal)) ||
+      (e.category && e.category.toLowerCase().includes(searchVal))
+    );
+  }
+  const ongoing = filtered.filter(e => e.status !== 'paid');
+  const archive = filtered.filter(e => e.status === 'paid');
+  renderEntries(ongoing, entriesOngoingList, false);
+  renderEntries(archive, entriesArchiveList, true);
+}
+
+let allRequests = [];
 
 function updateAdminNotification() {
   if (currentUserRole === 'admin' && allRequests.length > 0) {
@@ -151,6 +199,22 @@ function updateAdminNotification() {
     notificationBadge.style.display = 'none';
   }
 }
+
+// Modal logic
+const matrixModal = document.getElementById('matrix-modal');
+const matrixModalBody = document.getElementById('matrix-modal-body');
+const matrixModalClose = document.getElementById('matrix-modal-close');
+function showModal(html) {
+  matrixModalBody.innerHTML = `<div class='matrix-modal-body'>${html}</div>`;
+  matrixModal.classList.add('show');
+  matrixModal.classList.remove('hidden');
+}
+function closeModal() {
+  matrixModal.classList.remove('show');
+  matrixModal.classList.add('hidden');
+}
+matrixModalClose.onclick = closeModal;
+matrixModal.onclick = (e) => { if (e.target === matrixModal) closeModal(); };
 
 function renderEntries(entries, targetList, isArchive) {
   if (!targetList) return;
@@ -163,19 +227,19 @@ function renderEntries(entries, targetList, isArchive) {
     const entryEl = document.createElement("div");
     entryEl.className = `entry-item ${entry.type}`;
     const formattedAmount = new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(entry.amount);
-    const formattedDate = new Date(entry.date).toLocaleDateString();
+    let formattedDate = entry.date === "I don't remember" ? "I don't remember" : formatDate(entry.date);
     let statusText = entry.status === "paid" ? `<span style='color:#00ff41;'>Paid</span>` : `<span style='color:#ff4141;'>Pending</span>`;
     let actions = "";
-    // Admin controls (only for ongoing)
-    if (!isArchive && currentUserRole === "admin") {
+    // Admin controls (show delete for archive too)
+    if ((currentUserRole === "admin" && (!isArchive || isArchive))) {
       actions = `
-        <button class="btn-edit" data-id="${entry.id}" title="Edit Entry"><i class="fas fa-edit"></i> <span style='font-size:0.95rem;'>Edit</span></button>
+        ${!isArchive ? `<button class="btn-edit" data-id="${entry.id}" title="Edit Entry"><i class="fas fa-edit"></i> <span style='font-size:0.95rem;'>Edit</span></button>` : ''}
         <button class="btn-delete" data-id="${entry.id}" title="Delete Entry"><i class="fas fa-trash"></i> <span style='font-size:0.95rem;'>Delete</span></button>
-        ${entry.status !== "paid" ? `<button class="btn-primary btn-paid" data-id="${entry.id}" title="Mark as Paid">Mark as Paid</button>` : ""}
+        ${!isArchive && entry.status !== "paid" ? `<button class="btn-primary btn-paid" data-id="${entry.id}" title="Mark as Paid">Mark as Paid</button>` : ""}
       `;
     } else if (!isArchive && currentUser && entry.status !== "paid") {
       // Normal user: can request confirmation if not already requested
-      const alreadyRequested = entry.confirmationRequests?.includes(currentUser.uid);
+      const alreadyRequested = Array.isArray(entry.confirmationRequests) && entry.confirmationRequests.some(r => (typeof r === 'string' ? r === currentUser.uid : r.uid === currentUser.uid));
       actions = alreadyRequested
         ? `<div style='color:#00ff41;font-size:0.95rem;'>Requested</div>`
         : `<button class="btn-primary btn-request" data-id="${entry.id}" title="Request Payment Confirmation">Request Payment Confirmation</button>`;
@@ -197,11 +261,12 @@ function renderEntries(entries, targetList, isArchive) {
         <div class="entry-amount ${entry.type}">${entry.type === 'get' ? '+' : '-'}${formattedAmount}</div>
         <div class="entry-category">${entry.category}</div>
         <div class="entry-status">${statusText}</div>
-        <div class="entry-actions${(!isArchive && (currentUserRole === "admin" || currentUser)) ? '' : ' hidden'}">
+        <div class="entry-actions${((currentUserRole === "admin" && (!isArchive || isArchive)) || (!isArchive && currentUser)) ? '' : ' hidden'}">
           ${actions}
         </div>
         ${requestsInfo}
       </div>
+      ${entry.paidMessage && isArchive ? `<div class='matrix-modal-body' style='margin-top:0.7em;'><b>Paid Message:</b><br><span style='color:#baffc9;'>${entry.paidMessage}</span></div>` : ''}
     `;
     targetList.appendChild(entryEl);
   });
@@ -236,19 +301,38 @@ function renderEntries(entries, targetList, isArchive) {
     document.querySelectorAll(".btn-paid").forEach(btn => {
       btn.onclick = async e => {
         if (currentUserRole !== "admin") return;
-        await updateDoc(doc(db, "ledgerEntries", btn.dataset.id), { status: "paid" });
-        showToast("Marked as paid!", "success");
-        loadEntries();
+        // Show modal to enter message
+        let html = `<h3>Mark as Paid</h3><label for='paid-message'>Add a message (optional):</label><textarea id='paid-message' placeholder='Transaction ID, payment method, etc.'></textarea><button class='modal-btn' id='confirm-paid-btn'>Confirm Paid</button>`;
+        showModal(html);
+        document.getElementById('confirm-paid-btn').onclick = async () => {
+          const msg = document.getElementById('paid-message').value.trim();
+          await updateDoc(doc(db, "ledgerEntries", btn.dataset.id), { status: "paid", paidMessage: msg });
+          closeModal();
+          showToast("Marked as paid!", "success");
+          loadEntries();
+        };
       };
     });
     document.querySelectorAll(".btn-request").forEach(btn => {
       btn.onclick = async e => {
         if (!currentUser) return;
-        await updateDoc(doc(db, "ledgerEntries", btn.dataset.id), {
-          confirmationRequests: arrayUnion(currentUser.uid)
-        });
-        showToast("Request sent!", "success");
-        loadEntries();
+        // Show modal for user to enter a message
+        let html = `<h3>Request Payment Confirmation</h3><label for='request-message'>Add a message (optional):</label><textarea id='request-message' placeholder='Transaction ID, payment method, note...'></textarea><button class='modal-btn' id='confirm-request-btn'>Send Request</button>`;
+        showModal(html);
+        document.getElementById('confirm-request-btn').onclick = async () => {
+          const msg = document.getElementById('request-message').value.trim();
+          // Get entry
+          const entryRef = doc(db, 'ledgerEntries', btn.dataset.id);
+          const entrySnap = await getDoc(entryRef);
+          let reqs = entrySnap.exists() && Array.isArray(entrySnap.data().confirmationRequests) ? entrySnap.data().confirmationRequests : [];
+          // Remove any previous request by this user
+          reqs = reqs.filter(r => (typeof r === 'string' ? r !== currentUser.uid : r.uid !== currentUser.uid));
+          reqs.push({ uid: currentUser.uid, message: msg });
+          await updateDoc(entryRef, { confirmationRequests: reqs });
+          closeModal();
+          showToast("Request sent!", "success");
+          loadEntries();
+        };
       };
     });
     document.querySelectorAll('.requests-info.clickable').forEach(div => {
@@ -256,15 +340,62 @@ function renderEntries(entries, targetList, isArchive) {
         const entryId = div.getAttribute('data-entry-id');
         const entry = allRequests.find(r => r.entryId === entryId);
         if (!entry || !entry.requests.length) {
-          showToast('No requests for this entry.', 'info');
+          showModal('<h3>No requests for this entry.</h3>');
           return;
         }
-        // Fetch user emails by UID
-        const emails = await Promise.all(entry.requests.map(async uid => {
+        // Fetch user emails and messages by UID
+        const emails = await Promise.all(entry.requests.map(async req => {
+          let uid, message;
+          if (typeof req === 'string') { uid = req; message = ''; } else { uid = req.uid; message = req.message || ''; }
           const userDoc = await getDoc(doc(db, 'users', uid));
-          return userDoc.exists() ? userDoc.data().email : uid;
+          return { uid, email: userDoc.exists() ? userDoc.data().email : uid, message };
         }));
-        alert('Requesters:\n' + emails.join('\n'));
+        let html = `<h3>Payment Confirmation Requests</h3><ul style='margin-bottom:1.2rem;'>`;
+        emails.forEach(({uid, email, message}) => {
+          html += `<li style='display:flex;flex-direction:column;gap:0.2em;margin-bottom:0.7em;'><span style='color:#00ff41;'>${email}</span>${message ? `<span style='color:#baffc9;font-size:0.97em;'>${message}</span>` : ''}<button class='modal-btn reject' data-uid='${uid}' data-entry='${entryId}' style='margin-top:0.3em;width:max-content;'>Reject</button></li>`;
+        });
+        html += `</ul>`;
+        html += `<button class='modal-btn reject' id='reject-requests-btn'>Reject All</button>`;
+        showModal(html);
+        // Individual reject
+        document.querySelectorAll('.modal-btn.reject[data-uid]').forEach(btn => {
+          btn.onclick = async () => {
+            const uid = btn.getAttribute('data-uid');
+            const eid = btn.getAttribute('data-entry');
+            const entryRef = doc(db, 'ledgerEntries', eid);
+            const entrySnap = await getDoc(entryRef);
+            if (entrySnap.exists()) {
+              let reqs = (entrySnap.data().confirmationRequests || []);
+              reqs = reqs.filter(r => (typeof r === 'string' ? r !== uid : r.uid !== uid));
+              await updateDoc(entryRef, { confirmationRequests: reqs });
+              showToast('Request rejected.', 'success');
+              closeModal();
+              loadEntries();
+            }
+          };
+        });
+        // Reject all
+        document.getElementById('reject-requests-btn').onclick = async () => {
+          await updateDoc(doc(db, 'ledgerEntries', entryId), {
+            confirmationRequests: [],
+            status: 'pending'
+          });
+          closeModal();
+          showToast('All requests rejected. Entry set to unpaid.', 'success');
+          loadEntries();
+        };
+      };
+    });
+  } else {
+    // Archive: allow admin to delete
+    document.querySelectorAll(".btn-delete").forEach(btn => {
+      btn.onclick = async e => {
+        if (currentUserRole !== "admin") return;
+        if (confirm("Delete this entry?")) {
+          await deleteDoc(doc(db, "ledgerEntries", btn.dataset.id));
+          showToast("Entry deleted!", "success");
+          loadEntries();
+        }
       };
     });
   }
@@ -299,6 +430,16 @@ function showToast(message, type = 'success') {
     toast.classList.remove('show');
     setTimeout(() => { toast.classList.add('hidden'); }, 300);
   }, 3000);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr || dateStr === "I don't remember") return "I don't remember";
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 loadEntries();

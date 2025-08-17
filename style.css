@@ -36,7 +36,7 @@ body {
 .header, .dashboard, .entries-container, .entry-form-container, .auth-box, .login-box, .signup-box {
   background: rgba(0,0,0,0.82) !important;
   border-radius: 12px;
-  box-shadow: 0 0 30px #00ff41cc;
+  box-shadow: 0 0 0.5px #00ff4111;
   border: 1.5px solid #00ff41;
 }
 
@@ -61,7 +61,7 @@ body {
   font-family: 'Share Tech Mono', monospace;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 0 10px #00ff41;
+  box-shadow: 0 0 0.5px #00ff4111;
   transition: background 0.2s;
 }
 .btn-primary:hover, .btn-secondary:hover {
@@ -366,7 +366,7 @@ body {
   background: rgba(0,0,0,0.6) !important;
   border: 1.5px solid #00ff41 !important;
   border-radius: 16px;
-  box-shadow: 0 0 24px #00ff41cc, 0 0 2px #00ff41;
+  box-shadow: 0 0 0.5px #00ff4111, 0 0 0.5px #00ff41;
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -377,25 +377,31 @@ body {
 }
 
 .stat-card:hover {
-  box-shadow: 0 0 40px #00ff41, 0 0 8px #00ff41;
+  box-shadow: 0 0 2px #00ff41, 0 0 1px #00ff41;
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
+  width: 60px !important;
+  height: 60px !important;
+  aspect-ratio: 1/1;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.8);
   border: 1.5px solid #00ff41;
-  box-shadow: 0 0 12px #00ff4199;
+  box-shadow: 0 0 0.5px #00ff4111;
+  flex: none;
+  min-width: 60px;
+  min-height: 60px;
+  max-width: 60px;
+  max-height: 60px;
 }
 
 .stat-icon i {
   font-size: 2rem;
   color: #00ff41;
-  text-shadow: 0 0 8px #00ff41;
+  text-shadow: 0 0 1px #00ff41;
 }
 
 .stat-content h3 {
@@ -786,7 +792,7 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1.5rem;
-  box-shadow: 0 0 16px #00ff41cc;
+  box-shadow: 0 0 0.5px #00ff4111;
   position: relative;
 }
 
@@ -878,6 +884,9 @@ body {
   border-radius: 6px;
   padding: 0.2rem 0.7rem;
   margin-left: 0.5rem;
+}
+.requests-info, .entry-category {
+  box-shadow: 0 0 0.5px #00ff4111;
 }
 @media (max-width: 900px) {
   .entry-item {

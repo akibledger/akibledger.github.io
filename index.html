@@ -69,6 +69,90 @@
     .no-entries i { color: #00ff41; }
     .toast.success { border-color: #00ff41; box-shadow: 0 0 20px #00ff41; }
     .toast.error { border-color: #ff4141; box-shadow: 0 0 20px #ff4141; }
+    .matrix-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
+      align-items: center;
+      justify-content: center;
+    }
+    .matrix-modal.show { display: flex; }
+    .matrix-modal-content {
+      background: #101c10;
+      border: 1.5px solid #00ff41;
+      border-radius: 12px;
+      box-shadow: 0 0 8px #00ff41;
+      padding: 2.2rem 2.5rem 2rem 2.5rem;
+      min-width: 320px;
+      max-width: 95vw;
+      color: #00ff41;
+      font-family: 'Share Tech Mono', monospace;
+      position: relative;
+      text-align: left;
+    }
+    .matrix-modal-close {
+      position: absolute;
+      top: 1.1rem;
+      right: 1.3rem;
+      color: #00ff41;
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .matrix-modal-close:hover { color: #ff4141; }
+    .matrix-modal-body h3 {
+      margin-top: 0;
+      color: #00ff41;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+    .matrix-modal-body ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.2rem 0;
+    }
+    .matrix-modal-body li {
+      margin-bottom: 0.7rem;
+      color: #baffc9;
+      font-size: 1rem;
+    }
+    .matrix-modal-body .modal-btn {
+      background: #00ff41;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.05rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 2px #00ff4144;
+      padding: 0.5rem 1.2rem;
+      margin-right: 0.7rem;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+    .matrix-modal-body .modal-btn.reject {
+      background: #ff4141;
+      color: #fff;
+    }
+    .matrix-modal-body textarea {
+      width: 100%;
+      min-height: 60px;
+      background: #111;
+      color: #00ff41;
+      border: 1px solid #00ff41;
+      border-radius: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      resize: vertical;
+    }
   </style>
 </head>
 <body>
@@ -151,7 +235,12 @@
             <div class="form-row">
               <div class="input-group">
                 <label for="date">Date</label>
-                <input id="date" type="date" required>
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <input id="date" type="date" required>
+                  <label style="font-size:0.95em;display:flex;align-items:center;gap:0.3em;">
+                    <input type="checkbox" id="date-unknown" style="accent-color:#00ff41;"> I don't remember
+                  </label>
+                </div>
               </div>
               <div class="input-group">
                 <label for="category">Category</label>
@@ -205,6 +294,12 @@
     </div>
   </div>
   <div id="toast" class="toast hidden"></div>
+  <div id="matrix-modal" class="matrix-modal hidden">
+    <div class="matrix-modal-content">
+      <span id="matrix-modal-close" class="matrix-modal-close">&times;</span>
+      <div id="matrix-modal-body"></div>
+    </div>
+  </div>
   <script type="module" src="ledger.js"></script>
 </body>
 </html>
