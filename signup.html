@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Akib Ledger</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: #000; }
+    .matrix-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .signup-container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .signup-box {
+      background: rgba(0,32,0,0.95);
+      border: 1.5px solid #00ff41;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 0 30px #00ff41cc;
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+    .signup-box h1 {
+      color: #00ff41;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #00ff41;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      background: #111;
+      border: 1px solid #00ff41;
+      border-radius: 6px;
+      color: #00ff41;
+      font-size: 1rem;
+      font-family: 'Share Tech Mono', monospace;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .input-group input:focus {
+      border: 1.5px solid #00ff41;
+      background: #181;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 0.6rem;
+      background: #00ff41;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 0 10px #00ff41;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover {
+      background: #00cc33;
+    }
+    .btn-link {
+      background: none;
+      border: none;
+      color: #00ff41;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 0.5rem;
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .error-message {
+      color: #ff4141;
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas class="matrix-bg"></canvas>
+  <div class="signup-container">
+    <div class="signup-box">
+      <h1>Akib Ledger</h1>
+      <form id="signup-form">
+        <div class="input-group">
+          <input type="email" id="signup-email" placeholder="Email" required>
+        </div>
+        <div class="input-group">
+          <input type="password" id="signup-password" placeholder="Password" required>
+        </div>
+        <div class="error-message" id="signup-error"></div>
+        <button type="submit" class="btn-primary">Sign Up</button>
+      </form>
+      <button class="btn-link" onclick="window.location.href='login.html'">Back to Login</button>
+    </div>
+  </div>
+  <script type="module" src="signup.js"></script>
+  <script src="matrix.js"></script>
+</body>
+</html>

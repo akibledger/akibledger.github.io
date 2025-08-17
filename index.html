@@ -3,105 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Akib Ledger - Personal Finance Manager</title>
-  
-  <!-- Fallback inline CSS in case external CSS fails to load -->
-  <style>
-    /* Basic fallback styles */
-    body { 
-      margin: 0; 
-      padding: 0; 
-      font-family: Arial, sans-serif; 
-      background: #0a0a0a; 
-      color: #ffffff; 
-    }
-    .hidden { display: none !important; }
-    .container { min-height: 100vh; }
-    .access-key-container { 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      min-height: 100vh; 
-      padding: 2rem; 
-    }
-    .access-key-box { 
-      background: rgba(26, 26, 46, 0.9); 
-      border: 1px solid #00d4ff; 
-      border-radius: 20px; 
-      padding: 3rem; 
-      width: 100%; 
-      max-width: 450px; 
-      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3); 
-      text-align: center;
-    }
-    .logo { margin-bottom: 2rem; }
-    .logo i { font-size: 3rem; color: #00d4ff; margin-bottom: 1rem; }
-    .logo h1 { font-size: 2.5rem; color: #00d4ff; margin: 0; }
-    .access-key-form h2 { margin-bottom: 2rem; color: #00d4ff; }
-    .input-group { margin-bottom: 1.5rem; }
-    .input-group input { 
-      width: 100%; 
-      padding: 1rem; 
-      background: rgba(255, 255, 255, 0.1); 
-      border: 1px solid #00d4ff; 
-      border-radius: 10px; 
-      color: #ffffff; 
-      font-size: 1rem; 
-      box-sizing: border-box; 
-    }
-    .btn-primary { 
-      width: 100%; 
-      padding: 1rem; 
-      background: #00d4ff; 
-      border: none; 
-      border-radius: 10px; 
-      color: #000000; 
-      font-size: 1.1rem; 
-      font-weight: 600; 
-      cursor: pointer; 
-      margin-bottom: 1.5rem; 
-    }
-    .view-only-notice { 
-      text-align: center; 
-      color: rgba(255, 255, 255, 0.7); 
-      margin-top: 1rem; 
-    }
-  </style>
-  
-  <!-- External CSS -->
+  <title>Akib Ledger - Dashboard</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    body { background: #000; font-family: 'Share Tech Mono', monospace; }
+    .matrix-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .app-container { position: relative; z-index: 1; }
+    .header, .dashboard, .entries-container, .entry-form-container {
+      background: rgba(0,32,0,0.92) !important;
+      border-radius: 12px;
+      box-shadow: 0 0 30px #00ff41cc;
+      border: 1.5px solid #00ff41;
+    }
+    .header-content, .dashboard, .entries-container, .entry-form-container {
+      font-family: 'Share Tech Mono', monospace;
+      color: #00ff41;
+    }
+    .header .logo h1, .stat-content h3, .entries-header h2, .entry-form-container h2 {
+      color: #00ff41;
+      text-shadow: 0 0 10px #00ff41;
+      letter-spacing: 2px;
+    }
+    .btn-primary, .btn-secondary {
+      background: #00ff41;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ff41;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover, .btn-secondary:hover {
+      background: #00cc33;
+    }
+    .input-group input, .input-group select {
+      background: #111;
+      border: 1px solid #00ff41;
+      border-radius: 6px;
+      color: #00ff41;
+      font-size: 1rem;
+      font-family: 'Share Tech Mono', monospace;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .input-group input:focus, .input-group select:focus {
+      border: 1.5px solid #00ff41;
+      background: #181;
+    }
+    .stat-amount.positive { color: #00ff41; }
+    .stat-amount.negative { color: #ff4141; }
+    .entry-item { background: rgba(0,32,0,0.8); border: 1px solid #00ff41; color: #00ff41; }
+    .entry-amount.get { color: #00ff41; }
+    .entry-amount.owe { color: #ff4141; }
+    .entry-category { color: #00ff41; }
+    .entry-actions.hidden { display: none; }
+    .no-entries i { color: #00ff41; }
+    .toast.success { border-color: #00ff41; box-shadow: 0 0 20px #00ff41; }
+    .toast.error { border-color: #ff4141; box-shadow: 0 0 20px #ff4141; }
+  </style>
 </head>
 <body>
+  <!-- Remove the matrix rain animation from the dashboard -->
   <div class="container">
-    <!-- Access Key Container -->
-    <div id="access-key-container" class="access-key-container">
-      <div class="access-key-box">
-        <div class="logo">
-          <i class="fas fa-book-open"></i>
-          <h1>Akib Ledger</h1>
-        </div>
-        
-        <form id="access-key-form" class="access-key-form">
-          <h2>Enter Access Key</h2>
-          <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem;">
-            View the ledger publicly or enter your access key to edit entries
-          </p>
-          <div class="input-group">
-            <input type="password" id="access-key" placeholder="Enter access key (optional)" autocomplete="off">
-          </div>
-          <button type="submit" class="btn-primary">Unlock Editing</button>
-          <button type="button" id="view-only-btn" class="btn-secondary">View Only</button>
-          <p class="view-only-notice">
-            <i class="fas fa-eye"></i> Anyone can view the ledger
-          </p>
-        </form>
-      </div>
-    </div>
-
-    <!-- Main App Container -->
-    <div id="app-container" class="app-container hidden">
-      <!-- Header -->
+    <div id="app-container" class="app-container">
       <header class="header">
         <div class="header-content">
           <div class="logo">
@@ -109,15 +82,16 @@
             <h1>Akib Ledger</h1>
           </div>
           <div class="user-info">
-            <span id="access-status"></span>
-            <button id="lock-btn" class="btn-secondary">
-              <i class="fas fa-lock"></i> Lock/Unlock Editing
+            <span id="user-email"></span>
+            <button id="logout-btn" class="btn-secondary hidden">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+            <button id="login-btn" class="btn-secondary">
+              <i class="fas fa-sign-in-alt"></i> Login
             </button>
           </div>
         </div>
       </header>
-
-      <!-- Dashboard -->
       <div class="dashboard">
         <div class="stats-grid">
           <div class="stat-card">
@@ -126,7 +100,7 @@
             </div>
             <div class="stat-content">
               <h3>Total Receivable</h3>
-              <p id="total-receivable" class="stat-amount positive">$0.00</p>
+              <p id="total-receivable" class="stat-amount positive">৳0.00</p>
             </div>
           </div>
           <div class="stat-card">
@@ -135,7 +109,7 @@
             </div>
             <div class="stat-content">
               <h3>Total Payable</h3>
-              <p id="total-payable" class="stat-amount negative">$0.00</p>
+              <p id="total-payable" class="stat-amount negative">৳0.00</p>
             </div>
           </div>
           <div class="stat-card">
@@ -144,12 +118,10 @@
             </div>
             <div class="stat-content">
               <h3>Net Balance</h3>
-              <p id="net-balance" class="stat-amount">$0.00</p>
+              <p id="net-balance" class="stat-amount">৳0.00</p>
             </div>
           </div>
         </div>
-
-        <!-- Add Entry Form (Hidden by default) -->
         <div id="entry-form-container" class="entry-form-container hidden">
           <h2>Add New Entry</h2>
           <form id="entry-form" class="entry-form">
@@ -200,11 +172,9 @@
             </div>
           </form>
         </div>
-
-        <!-- Entries List -->
         <div class="entries-container">
           <div class="entries-header">
-            <h2>Transaction History</h2>
+            <h2>Ongoing Transactions</h2>
             <div class="filters">
               <select id="filter-type">
                 <option value="all">All Types</option>
@@ -223,34 +193,18 @@
               <input type="text" id="search-entries" placeholder="Search entries...">
             </div>
           </div>
-          <div class="entries-list" id="entries"></div>
+          <div class="entries-list" id="entries-ongoing"></div>
+        </div>
+        <div class="entries-container" style="margin-top:2.5rem;">
+          <div class="entries-header">
+            <h2>Archives</h2>
+          </div>
+          <div class="entries-list" id="entries-archive"></div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Notification Toast -->
   <div id="toast" class="toast hidden"></div>
-
-  <!-- External JavaScript -->
-  <script src="ledger.js"></script>
-  
-  <!-- Fallback script loading check -->
-  <script>
-    // Check if external files loaded properly
-    window.addEventListener('load', function() {
-      // Check if CSS loaded
-      const computedStyle = window.getComputedStyle(document.body);
-      if (computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)' || computedStyle.backgroundColor === 'initial') {
-        console.warn('External CSS may not have loaded properly');
-      }
-      
-      // Check if JS loaded
-      if (typeof ledger === 'undefined') {
-        console.error('JavaScript file failed to load');
-        document.body.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ff0000;"><h1>Error Loading Files</h1><p>Please check your internet connection and refresh the page.</p></div>';
-      }
-    });
-  </script>
+  <script type="module" src="ledger.js"></script>
 </body>
 </html>
