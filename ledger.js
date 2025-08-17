@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -54,9 +54,100 @@ logoutBtn.addEventListener("click", async () => {
   showToast("Logged out!", "success");
 });
 
+const openUserMgmtBtn = document.getElementById('open-user-management');
+const adminUserMgmt = document.getElementById('admin-user-management');
+const userListTable = document.getElementById('user-list');
+
+// Show button for admin
+function updateUserMgmtButton() {
+  if (currentUserRole === 'admin' && openUserMgmtBtn) {
+    openUserMgmtBtn.style.display = '';
+  } else if (openUserMgmtBtn) {
+    openUserMgmtBtn.style.display = 'none';
+  }
+}
+
+// Fetch and render users
+async function fetchAndRenderUsers() {
+  if (!userListTable) return;
+  const usersSnapshot = await getDocs(collection(db, 'users'));
+  const tbody = userListTable.querySelector('tbody');
+  tbody.innerHTML = '';
+  usersSnapshot.forEach(docSnap => {
+    const user = docSnap.data();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHTML(user.email || docSnap.id)}</td>
+      <td>
+        <select class="user-role-select" data-uid="${docSnap.id}">
+          <option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option>
+          <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>admin</option>
+        </select>
+      </td>
+      <td>
+        <button class="btn-delete-user" data-uid="${docSnap.id}">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  // Role change
+  tbody.querySelectorAll('.user-role-select').forEach(sel => {
+    sel.onchange = async e => {
+      const uid = sel.getAttribute('data-uid');
+      const newRole = sel.value;
+      await updateDoc(doc(db, 'users', uid), { role: newRole });
+      showToast('Role updated!', 'success');
+      fetchAndRenderUsers();
+    };
+  });
+  // Delete user
+  tbody.querySelectorAll('.btn-delete-user').forEach(btn => {
+    btn.onclick = async () => {
+      const uid = btn.getAttribute('data-uid');
+      if (uid === currentUser.uid) {
+        showToast("You can't delete yourself!", 'error');
+        return;
+      }
+      if (!confirm('Delete this user from the system? This cannot be undone.')) return;
+      // Remove from Firestore
+      await deleteDoc(doc(db, 'users', uid));
+      // Remove from Firebase Auth (requires admin privileges via backend/cloud function)
+      try {
+        // Try to delete from Auth if current user is admin
+        // This will only work if running in a privileged environment (not client-side)
+        // So, show a message if not possible
+        const userToDelete = await getAuth().getUser(uid);
+        if (userToDelete) {
+          await deleteUser(userToDelete);
+        }
+      } catch (err) {
+        // Most likely, client-side JS cannot delete Auth users directly
+        showToast('User deleted from Firestore. Remove from Firebase Auth via admin console or backend.', 'warning');
+      }
+      showToast('User deleted!', 'success');
+      fetchAndRenderUsers();
+    };
+  });
+}
+
+// Security: Only allow admin to access user management
+if (openUserMgmtBtn && adminUserMgmt) {
+  openUserMgmtBtn.onclick = () => {
+    if (currentUserRole !== 'admin') {
+      showToast('Only admin can manage users!', 'error');
+      return;
+    }
+    adminUserMgmt.classList.toggle('hidden');
+    if (!adminUserMgmt.classList.contains('hidden')) {
+      fetchAndRenderUsers();
+    }
+  };
+}
+
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (user) {
+    await ensureUserDoc(user);
     userEmail.textContent = user.email;
     logoutBtn.classList.remove("hidden");
     loginBtn.classList.add("hidden");
@@ -68,6 +159,7 @@ onAuthStateChanged(auth, async user => {
     } else {
       entryFormContainer.classList.add("hidden");
     }
+    updateUserMgmtButton();
     loadEntries();
   } else {
     currentUserRole = null;
@@ -75,6 +167,7 @@ onAuthStateChanged(auth, async user => {
     logoutBtn.classList.add("hidden");
     loginBtn.classList.remove("hidden");
     entryFormContainer.classList.add("hidden");
+    updateUserMgmtButton();
     loadEntries();
   }
 });
@@ -228,13 +321,13 @@ notificationBadge.onclick = async () => {
     for (const entry of allRequests) {
       const entryDoc = await getDoc(doc(db, 'ledgerEntries', entry.entryId));
       const entryData = entryDoc.exists() ? entryDoc.data() : {};
-      html += `<li style='margin-bottom:0.7em;'><b>${entryData.name || 'Unknown'}</b> - <span style='color:#a259c6;'>${entryData.reason || ''}</span><ul style='margin:0.5em 0 0.5em 1.2em;'>`;
+      html += `<li style='margin-bottom:0.7em;'><b>${escapeHTML(entryData.name || 'Unknown')}</b> - <span style='color:#a259c6;'>${escapeHTML(entryData.reason || '')}</span><ul style='margin:0.5em 0 0.5em 1.2em;'>`;
       for (const req of entry.requests) {
         let uid, message;
         if (typeof req === 'string') { uid = req; message = ''; } else { uid = req.uid; message = req.message || ''; }
         const userDoc = await getDoc(doc(db, 'users', uid));
         const email = userDoc.exists() ? userDoc.data().email : uid;
-        html += `<li style='margin-bottom:0.3em;'><span style='color:#00ff41;'>${email}</span>${message ? `<span style='color:#baffc9;font-size:0.97em;'> — ${message}</span>` : ''}
+        html += `<li style='margin-bottom:0.3em;'><span style='color:#00ff41;'>${escapeHTML(email)}</span>${escapeHTML(message) ? `<span style='color:#baffc9;font-size:0.97em;'> — ${escapeHTML(message)}</span>` : ''}
         <button class='modal-btn accept' data-uid='${uid}' data-entry='${entry.entryId}' style='margin-left:0.7em;background:#00ff41;color:#000;'>Accept</button>
         <button class='modal-btn reject' data-uid='${uid}' data-entry='${entry.entryId}' style='margin-left:0.7em;'>Reject</button></li>`;
       }
@@ -329,20 +422,20 @@ function renderEntries(entries, targetList, isArchive) {
     }
     entryEl.innerHTML = `
       <div class="entry-details">
-        <h4>${entry.name}</h4>
-        <p>${entry.reason}</p>
-        <small>${formattedDate}</small>
+        <h4>${escapeHTML(entry.name)}</h4>
+        <p>${escapeHTML(entry.reason)}</p>
+        <small>${escapeHTML(formattedDate)}</small>
       </div>
       <div class="entry-meta">
         <div class="entry-amount ${entry.type}">${entry.type === 'get' ? '+' : '-'}${formattedAmount}</div>
-        <div class="entry-category">${entry.category}</div>
+        <div class="entry-category">${escapeHTML(entry.category)}</div>
         <div class="entry-status">${statusText}</div>
         <div class="entry-actions${((currentUserRole === "admin" && (!isArchive || isArchive)) || (!isArchive && currentUser)) ? '' : ' hidden'}">
           ${actions}
         </div>
         ${requestsInfo}
       </div>
-      ${entry.paidMessage && isArchive ? `<div class='matrix-modal-body' style='margin-top:0.7em;'><b>Paid Message:</b><br><span style='color:#baffc9;'>${entry.paidMessage}</span></div>` : ''}
+      ${entry.paidMessage && isArchive ? `<div class='matrix-modal-body' style='margin-top:0.7em;'><b>Paid Message:</b><br><span style='color:#baffc9;'>${escapeHTML(entry.paidMessage)}</span></div>` : ''}
     `;
     targetList.appendChild(entryEl);
   });
@@ -428,7 +521,7 @@ function renderEntries(entries, targetList, isArchive) {
         }));
         let html = `<h3>Payment Confirmation Requests</h3><ul style='margin-bottom:1.2rem;'>`;
         emails.forEach(({uid, email, message}) => {
-          html += `<li style='display:flex;flex-direction:column;gap:0.2em;margin-bottom:0.7em;'><span style='color:#00ff41;'>${email}</span>${message ? `<span style='color:#baffc9;font-size:0.97em;'>${message}</span>` : ''}<button class='modal-btn reject' data-uid='${uid}' data-entry='${entryId}' style='margin-top:0.3em;width:max-content;'>Reject</button></li>`;
+          html += `<li style='display:flex;flex-direction:column;gap:0.2em;margin-bottom:0.7em;'><span style='color:#00ff41;'>${escapeHTML(email)}</span>${escapeHTML(message) ? `<span style='color:#baffc9;font-size:0.97em;'>${escapeHTML(message)}</span>` : ''}<button class='modal-btn reject' data-uid='${uid}' data-entry='${entryId}' style='margin-top:0.3em;width:max-content;'>Reject</button></li>`;
         });
         html += `</ul>`;
         html += `<button class='modal-btn reject' id='reject-requests-btn'>Reject All</button>`;
@@ -516,6 +609,25 @@ function formatDate(dateStr) {
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[m]));
+}
+
+// Ensure Firestore user doc exists for every login/signup
+async function ensureUserDoc(user) {
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    await setDoc(userRef, {
+      email: user.email,
+      role: "user"
+    });
+  }
 }
 
 loadEntries();
