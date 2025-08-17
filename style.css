@@ -633,32 +633,17 @@ body {
 
 .entry-actions {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 0.5rem;
+  margin-left: 1rem;
+  flex-wrap: wrap;
 }
-
-.entry-actions.hidden {
-  display: none;
-}
-
-.btn-edit,
-.btn-delete {
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-glow);
-  border-radius: 6px;
-  color: #ffffff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-edit:hover {
-  background: rgba(0, 212, 255, 0.2);
-  border-color: var(--neon-blue);
-}
-
-.btn-delete:hover {
-  background: rgba(255, 0, 128, 0.2);
-  border-color: var(--neon-pink);
+.entry-actions .btn-primary, .entry-actions .btn-edit, .entry-actions .btn-delete {
+  margin-bottom: 0.4rem;
+  min-width: 90px;
+  flex: 1 1 120px;
+  box-sizing: border-box;
 }
 
 /* View Only Mode */
@@ -947,5 +932,17 @@ body {
     min-width: 0;
     width: 95vw;
     padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+  .entry-actions {
+    flex-direction: column;
+    align-items: stretch;
+    margin-left: 0;
+    width: 100%;
+    gap: 0.3rem;
+  }
+  .entry-actions .btn-primary, .entry-actions .btn-edit, .entry-actions .btn-delete {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0.3rem;
   }
 }
