@@ -854,10 +854,50 @@ body {
   text-align: center;
 }
 @media (max-width: 900px) {
+  .dashboard {
+    padding: 0.7rem 0.2rem;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.2rem 0.7rem;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .stat-icon {
+    margin-bottom: 0.7rem;
+    margin-right: 0;
+  }
+  .stat-content h3 {
+    font-size: 1.1rem;
+  }
+  .stat-amount {
+    font-size: 1.3rem;
+    word-break: break-all;
+  }
+  .entry-item {
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 1rem 0.5rem 0.7rem 0.5rem;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .entry-details h4 {
+    font-size: 1.1rem;
+    word-break: break-word;
+  }
   .entry-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
   }
   .entry-amount, .entry-category, .entry-status, .entry-actions, .requests-info {
     margin-right: 0;
@@ -865,5 +905,47 @@ body {
     width: 100%;
     min-width: 0;
     text-align: left;
+    word-break: break-all;
+  }
+  .entry-form-container {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    max-width: 100vw;
+    min-width: 0;
+  }
+  .form-row {
+    flex-direction: column;
+    gap: 0.7rem;
+    width: 100%;
+    min-width: 0;
+  }
+  .input-group input, .input-group select {
+    font-size: 1rem;
+    padding: 0.5rem 0.7rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .filters {
+    flex-direction: column;
+    gap: 0.7rem;
+    width: 100%;
+    min-width: 0;
+  }
+  .filters select, .filters input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .btn-primary, .btn-secondary {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .matrix-modal-content {
+    min-width: 0;
+    width: 95vw;
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
   }
 }
