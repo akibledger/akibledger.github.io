@@ -826,91 +826,44 @@ body {
   align-items: center;
   gap: 1.2rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.entry-amount, .entry-category, .entry-status, .entry-actions, .requests-info {
+  margin-right: 0.7rem;
+  margin-bottom: 0.3rem;
+  min-width: 0;
 }
 .entry-amount {
-  font-size: 1.2rem;
-  font-weight: 700;
-  text-align: right;
   min-width: 120px;
+  text-align: right;
 }
 .entry-category {
-  background: rgba(0,255,65,0.12);
-  color: #00ff41;
-  padding: 0.3rem 1rem;
-  border-radius: 16px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  min-width: 80px;
   text-align: center;
-  margin-right: 0.5rem;
 }
 .entry-status {
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin-right: 0.5rem;
+  min-width: 70px;
+  text-align: center;
 }
 .entry-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: 1rem;
-}
-.btn-primary, .btn-edit, .btn-delete {
-  padding: 0.4rem 1.1rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  min-width: unset;
-  box-shadow: 0 0 6px #00ff41cc;
-}
-.btn-primary.btn-paid {
-  background: #00ff41;
-  color: #000;
-  font-weight: bold;
-  font-size: 1rem;
-  padding: 0.4rem 1.1rem;
-  margin: 0;
-  border: none;
-  border-radius: 6px;
-  box-shadow: 0 0 8px #00ff41cc;
-  transition: background 0.2s;
-}
-.btn-primary.btn-paid:hover {
-  background: #00cc33;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 .requests-info {
-  background: rgba(0,0,0,0.5);
-  color: #00ff41;
-  font-size: 0.95rem;
-  border-radius: 6px;
-  padding: 0.2rem 0.7rem;
-  margin-left: 0.5rem;
-}
-.requests-info, .entry-category {
-  box-shadow: 0 0 0.5px #00ff4111;
+  min-width: 80px;
+  text-align: center;
 }
 @media (max-width: 900px) {
-  .entry-item {
-    flex-direction: column;
-    gap: 0.7rem;
-    padding: 1rem;
-  }
   .entry-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  .entry-actions {
-    margin-left: 0;
-  }
-  .entry-form-container {
-    padding: 1.2rem 0.7rem 1rem 0.7rem;
-  }
-  .form-row {
-    flex-direction: column;
-    gap: 0.7rem;
-  }
-  .entry-form .btn-primary {
+  .entry-amount, .entry-category, .entry-status, .entry-actions, .requests-info {
+    margin-right: 0;
+    margin-bottom: 0.3rem;
     width: 100%;
-    align-self: stretch;
+    min-width: 0;
+    text-align: left;
   }
 }
