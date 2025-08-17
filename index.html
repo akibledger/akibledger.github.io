@@ -230,6 +230,7 @@
     <div id="app-container" class="app-container">
       <header class="header">
         <div class="header-content">
+          <button id="theme-switcher-btn" class="btn-secondary theme-btn-top">Theme</button>
           <div class="logo">
             <i class="fas fa-book-open"></i>
             <h1>Akib Ledger</h1>
@@ -399,17 +400,6 @@
       </div>
     </div>
   </div>
-  <span id="theme-switcher-btn" class="theme-switcher-btn" title="Change Theme" aria-label="Change Theme">
-    <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="40" r="28" fill="currentColor"/>
-      <text font-size="11" font-family="'Share Tech Mono', monospace" fill="#000">
-        <textPath xlink:href="#circlePath" startOffset="0">Theme • Theme • Theme • Theme • </textPath>
-      </text>
-      <defs>
-        <path id="circlePath" d="M40,40 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0"/>
-      </defs>
-    </svg>
-  </span>
   <script type="module" src="ledger.js"></script>
   <script>
 // Theme switcher modal logic
