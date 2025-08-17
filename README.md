@@ -1,6 +1,6 @@
 # Akib Ledger
 
-A simple, modern ledger for tracking who owes what. Neon Matrix and pink Bonita themes. Firebase login, real-time updates, and payment confirmations.
+A simple, modern ledger for tracking who owes what. Matrix (neon green) and Bonita (pink) themes. Firebase login, real-time updates, and payment confirmations.
 
 ## What it does
 - Anyone can view the ledger
@@ -13,7 +13,7 @@ A simple, modern ledger for tracking who owes what. Neon Matrix and pink Bonita 
 2. Log in or sign up (Google/email)
 3. Admin? You can add, edit, delete, mark paid, see all requests
 4. Not admin? You can request payment confirmation on your entries
-5. Click the palette button (bottom right) to switch between green Matrix and pink Bonita themes
+5. Click the palette button (bottom right) to switch between Matrix and Bonita themes
 
 ## Payment requests
 - Users: Click to request payment confirmation, add a note if you want
