@@ -571,8 +571,10 @@ function renderEntries(entries, targetList, isArchive) {
 }
 
 function updateStats(entries) {
-  const receivables = entries.filter(e => e.type === 'get').reduce((sum, e) => sum + e.amount, 0);
-  const payables = entries.filter(e => e.type === 'owe').reduce((sum, e) => sum + e.amount, 0);
+  // Only count entries that are not paid
+  const ongoing = entries.filter(e => e.status !== 'paid');
+  const receivables = ongoing.filter(e => e.type === 'get').reduce((sum, e) => sum + e.amount, 0);
+  const payables = ongoing.filter(e => e.type === 'owe').reduce((sum, e) => sum + e.amount, 0);
   const netBalance = receivables - payables;
   document.getElementById('total-receivable').textContent = new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(receivables);
   document.getElementById('total-payable').textContent = new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(payables);
