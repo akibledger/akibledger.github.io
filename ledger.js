@@ -39,6 +39,7 @@ notificationBadge.style.padding = '0.2rem 0.7rem';
 notificationBadge.style.marginLeft = '1rem';
 notificationBadge.style.fontSize = '1rem';
 notificationBadge.style.boxShadow = '0 0 8px #00ff41cc';
+notificationBadge.style.cursor = 'pointer';
 userEmail.parentNode.insertBefore(notificationBadge, userEmail.nextSibling);
 
 let currentUser = null;
@@ -215,6 +216,81 @@ function closeModal() {
 }
 matrixModalClose.onclick = closeModal;
 matrixModal.onclick = (e) => { if (e.target === matrixModal) closeModal(); };
+
+notificationBadge.onclick = async () => {
+  if (currentUserRole === 'admin' && allRequests.length > 0) {
+    let totalRequests = allRequests.reduce((sum, r) => sum + r.requests.length, 0);
+    if (totalRequests === 0) {
+      showModal('<h3>No outstanding requests.</h3>');
+      return;
+    }
+    let html = `<h3>All Payment Confirmation Requests</h3><ul style='margin-bottom:1.2rem;'>`;
+    for (const entry of allRequests) {
+      const entryDoc = await getDoc(doc(db, 'ledgerEntries', entry.entryId));
+      const entryData = entryDoc.exists() ? entryDoc.data() : {};
+      html += `<li style='margin-bottom:0.7em;'><b>${entryData.name || 'Unknown'}</b> - <span style='color:#a259c6;'>${entryData.reason || ''}</span><ul style='margin:0.5em 0 0.5em 1.2em;'>`;
+      for (const req of entry.requests) {
+        let uid, message;
+        if (typeof req === 'string') { uid = req; message = ''; } else { uid = req.uid; message = req.message || ''; }
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        const email = userDoc.exists() ? userDoc.data().email : uid;
+        html += `<li style='margin-bottom:0.3em;'><span style='color:#00ff41;'>${email}</span>${message ? `<span style='color:#baffc9;font-size:0.97em;'> — ${message}</span>` : ''}
+        <button class='modal-btn accept' data-uid='${uid}' data-entry='${entry.entryId}' style='margin-left:0.7em;background:#00ff41;color:#000;'>Accept</button>
+        <button class='modal-btn reject' data-uid='${uid}' data-entry='${entry.entryId}' style='margin-left:0.7em;'>Reject</button></li>`;
+      }
+      html += `</ul></li>`;
+    }
+    html += `</ul><button class='modal-btn reject' id='reject-all-requests-btn'>Reject All</button>`;
+    showModal(html);
+    // Attach accept/reject handlers after modal is rendered
+    setTimeout(() => {
+      document.querySelectorAll('.modal-btn.accept[data-uid]').forEach(btn => {
+        btn.onclick = async () => {
+          const uid = btn.getAttribute('data-uid');
+          const eid = btn.getAttribute('data-entry');
+          // Show modal to enter message
+          let html = `<h3>Mark as Paid</h3><label for='paid-message'>Add a message (optional):</label><textarea id='paid-message' placeholder='Transaction ID, payment method, etc.'></textarea><button class='modal-btn' id='confirm-paid-btn'>Confirm Paid</button>`;
+          showModal(html);
+          document.getElementById('confirm-paid-btn').onclick = async () => {
+            const msg = document.getElementById('paid-message').value.trim();
+            await updateDoc(doc(db, 'ledgerEntries', eid), { status: "paid", paidMessage: msg, confirmationRequests: [] });
+            closeModal();
+            showToast("Marked as paid!", "success");
+            loadEntries();
+          };
+        };
+      });
+      document.querySelectorAll('.modal-btn.reject[data-uid]').forEach(btn => {
+        btn.onclick = async () => {
+          const uid = btn.getAttribute('data-uid');
+          const eid = btn.getAttribute('data-entry');
+          const entryRef = doc(db, 'ledgerEntries', eid);
+          const entrySnap = await getDoc(entryRef);
+          if (entrySnap.exists()) {
+            let reqs = (entrySnap.data().confirmationRequests || []);
+            reqs = reqs.filter(r => (typeof r === 'string' ? r !== uid : r.uid !== uid));
+            await updateDoc(entryRef, { confirmationRequests: reqs });
+            showToast('Request rejected.', 'success');
+            closeModal();
+            loadEntries();
+          }
+        };
+      });
+      document.getElementById('reject-all-requests-btn').onclick = async () => {
+        // Remove all requests from all entries
+        await Promise.all(allRequests.map(async entry => {
+          await updateDoc(doc(db, 'ledgerEntries', entry.entryId), {
+            confirmationRequests: [],
+            status: 'pending'
+          });
+        }));
+        closeModal();
+        showToast('All requests rejected. All entries set to unpaid.', 'success');
+        loadEntries();
+      };
+    }, 100);
+  }
+};
 
 function renderEntries(entries, targetList, isArchive) {
   if (!targetList) return;

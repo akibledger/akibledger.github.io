@@ -153,10 +153,79 @@
       padding: 0.5rem 1rem;
       resize: vertical;
     }
+    .theme-choice-btn {
+      width: 100%;
+      padding: 1.2rem 0;
+      font-size: 1.2rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
+      margin-bottom: 0.2rem;
+    }
+    .theme-sigma-btn {
+      background: #000;
+      color: #00ff41;
+      border-color: #00ff41;
+      box-shadow: 0 0 4px #00ff41;
+    }
+    .theme-sigma-btn:hover {
+      background: #101c10;
+      color: #baffc9;
+      border-color: #baffc9;
+    }
+    .theme-bonita-btn {
+      background: #ffe6fa;
+      color: #d72660;
+      border-color: #ff7edb;
+      box-shadow: 0 0 4px #ff7edb;
+    }
+    .theme-bonita-btn:hover {
+      background: #fff0fa;
+      color: #a259c6;
+      border-color: #a259c6;
+    }
+    body.theme-bonita .matrix-modal-content {
+      background: #fff0fa;
+      color: #3a003a;
+      border: 2px solid #ff7edb;
+    }
+    body.theme-sigma .matrix-modal-content {
+      background: #101c10;
+      color: #00ff41;
+      border: 1.5px solid #00ff41;
+    }
+    .theme-switcher-floating {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 10001;
+      width: 38px;
+      height: 38px;
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+      font-size: 1.3rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 2px var(--accent2);
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: 2px solid var(--border-main);
+      transition: background 0.2s, color 0.2s, border 0.2s;
+    }
+    .theme-switcher-floating:hover {
+      background: var(--btn-hover);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
-  <!-- Remove the matrix rain animation from the dashboard -->
   <div class="container">
     <div id="app-container" class="app-container">
       <header class="header">
@@ -300,6 +369,63 @@
       <div id="matrix-modal-body"></div>
     </div>
   </div>
+  <div id="theme-modal" class="matrix-modal hidden">
+    <div class="matrix-modal-content">
+      <span id="theme-modal-close" class="matrix-modal-close">&times;</span>
+      <div id="theme-modal-body">
+        <h3 style="margin-bottom:1.2rem;">Choose a Theme</h3>
+        <div style="display:flex;flex-direction:column;gap:1.2rem;">
+          <button class="theme-choice-btn theme-sigma-btn" data-theme="theme-sigma">
+            I'm a sigma boi
+          </button>
+          <button class="theme-choice-btn theme-bonita-btn" data-theme="theme-bonita">
+            I'm a bonita girly girl
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span id="theme-switcher-btn" class="theme-switcher-btn" title="Change Theme" aria-label="Change Theme">
+    <svg width="80" height="80" viewBox="0 0 80 80" style="display:block;" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="28" fill="currentColor"/>
+      <text font-size="11" font-family="'Share Tech Mono', monospace" fill="#000">
+        <textPath xlink:href="#circlePath" startOffset="0">Theme • Theme • Theme • Theme • </textPath>
+      </text>
+      <defs>
+        <path id="circlePath" d="M40,40 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0"/>
+      </defs>
+    </svg>
+  </span>
   <script type="module" src="ledger.js"></script>
+  <script>
+// Theme switcher modal logic
+const themeBtn = document.getElementById('theme-switcher-btn');
+const themeModal = document.getElementById('theme-modal');
+const themeModalClose = document.getElementById('theme-modal-close');
+function setTheme(theme) {
+  document.body.classList.remove('theme-sigma', 'theme-bonita');
+  document.body.classList.add(theme);
+  localStorage.setItem('akibledger-theme', theme);
+}
+themeBtn.onclick = () => {
+  themeModal.classList.add('show');
+  themeModal.classList.remove('hidden');
+};
+themeModalClose.onclick = () => {
+  themeModal.classList.remove('show');
+  themeModal.classList.add('hidden');
+};
+themeModal.onclick = (e) => { if (e.target === themeModal) themeModal.classList.add('hidden'); };
+document.querySelectorAll('.theme-choice-btn').forEach(btn => {
+  btn.onclick = () => {
+    setTheme(btn.getAttribute('data-theme'));
+    themeModal.classList.remove('show');
+    themeModal.classList.add('hidden');
+  };
+});
+// On load
+const savedTheme = localStorage.getItem('akibledger-theme') || 'theme-sigma';
+setTheme(savedTheme);
+</script>
 </body>
 </html>
