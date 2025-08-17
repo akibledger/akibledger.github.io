@@ -189,7 +189,7 @@ if (dateInput && dateUnknown) {
 
 if (entryForm) {
   entryForm.addEventListener("submit", async e => {
-    e.preventDefault();
+  e.preventDefault();
     if (currentUserRole !== "admin") {
       showToast("Only admin can add entries!", "error");
       return;

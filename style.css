@@ -1290,6 +1290,15 @@ body.theme-bonita .user-info span {
   color: #d72660 !important;
 }
 
+body.theme-bonita .matrix-modal-body,
+body.theme-bonita .matrix-modal-body span,
+body.theme-bonita .matrix-modal-body b {
+  color: #a259c6 !important;
+}
+body.theme-bonita .matrix-modal-body b {
+  color: #d72660 !important;
+}
+
 .admin-user-management {
   background: var(--bg-card);
   border: 2px solid var(--border-main);
