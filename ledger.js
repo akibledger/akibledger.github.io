@@ -24,7 +24,8 @@ const userEmail = document.getElementById("user-email");
 const entryFormContainer = document.getElementById("entry-form-container");
 const entryForm = document.getElementById("entry-form");
 const entriesList = document.getElementById("entries");
-const entriesOngoingList = document.getElementById("entries-ongoing");
+const entriesGetOngoingList = document.getElementById("entries-get-ongoing");
+const entriesOweOngoingList = document.getElementById("entries-owe-ongoing");
 const entriesArchiveList = document.getElementById("entries-archive");
 const toast = document.getElementById("toast");
 
@@ -231,20 +232,36 @@ if (entryForm) {
   });
 }
 
-// Filter controls
-const filterType = document.getElementById('filter-type');
-const filterCategory = document.getElementById('filter-category');
-const searchEntries = document.getElementById('search-entries');
+// Filter controls for separated sections
+const filterCategoryGet = document.getElementById('filter-category-get');
+const filterCategoryOwe = document.getElementById('filter-category-owe');
+const filterTypeArchive = document.getElementById('filter-type-archive');
+const filterCategoryArchive = document.getElementById('filter-category-archive');
+const searchEntriesGet = document.getElementById('search-entries-get');
+const searchEntriesOwe = document.getElementById('search-entries-owe');
+const searchEntriesArchive = document.getElementById('search-entries-archive');
+const sortAmountGet = document.getElementById('sort-amount-get');
+const sortAmountOwe = document.getElementById('sort-amount-owe');
+const sortAmountArchive = document.getElementById('sort-amount-archive');
 
 let allEntries = [];
 
-if (filterType) filterType.addEventListener('change', applyFilters);
-if (filterCategory) filterCategory.addEventListener('change', applyFilters);
-if (searchEntries) searchEntries.addEventListener('input', applyFilters);
+// Add event listeners for all filter controls
+if (filterCategoryGet) filterCategoryGet.addEventListener('change', applyFilters);
+if (filterCategoryOwe) filterCategoryOwe.addEventListener('change', applyFilters);
+if (filterTypeArchive) filterTypeArchive.addEventListener('change', applyFilters);
+if (filterCategoryArchive) filterCategoryArchive.addEventListener('change', applyFilters);
+if (searchEntriesGet) searchEntriesGet.addEventListener('input', applyFilters);
+if (searchEntriesOwe) searchEntriesOwe.addEventListener('input', applyFilters);
+if (searchEntriesArchive) searchEntriesArchive.addEventListener('input', applyFilters);
+if (sortAmountGet) sortAmountGet.addEventListener('change', applyFilters);
+if (sortAmountOwe) sortAmountOwe.addEventListener('change', applyFilters);
+if (sortAmountArchive) sortAmountArchive.addEventListener('change', applyFilters);
 
 async function loadEntries() {
   if (entriesList) entriesList.innerHTML = "<div>Loading...</div>";
-  if (entriesOngoingList) entriesOngoingList.innerHTML = "<div>Loading...</div>";
+  if (entriesGetOngoingList) entriesGetOngoingList.innerHTML = "<div>Loading...</div>";
+  if (entriesOweOngoingList) entriesOweOngoingList.innerHTML = "<div>Loading...</div>";
   if (entriesArchiveList) entriesArchiveList.innerHTML = "<div>Loading...</div>";
   const q = query(ledgerCollection, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
@@ -263,24 +280,70 @@ async function loadEntries() {
 }
 
 function applyFilters() {
-  let filtered = allEntries.slice();
-  const typeVal = filterType ? filterType.value : 'all';
-  const catVal = filterCategory ? filterCategory.value : 'all';
-  const searchVal = searchEntries ? searchEntries.value.trim().toLowerCase() : '';
-
-  if (typeVal !== 'all') filtered = filtered.filter(e => e.type === typeVal);
-  if (catVal !== 'all') filtered = filtered.filter(e => e.category === catVal);
-  if (searchVal) {
-    filtered = filtered.filter(e =>
-      (e.name && e.name.toLowerCase().includes(searchVal)) ||
-      (e.reason && e.reason.toLowerCase().includes(searchVal)) ||
-      (e.category && e.category.toLowerCase().includes(searchVal))
-    );
+  // Helper function to sort entries by amount
+  function sortByAmount(entries, sortOrder) {
+    if (sortOrder === 'none') return entries;
+    return entries.slice().sort((a, b) => {
+      if (sortOrder === 'asc') return a.amount - b.amount;
+      if (sortOrder === 'desc') return b.amount - a.amount;
+      return 0;
+    });
   }
-  const ongoing = filtered.filter(e => e.status !== 'paid');
-  const archive = filtered.filter(e => e.status === 'paid');
-  renderEntries(ongoing, entriesOngoingList, false);
-  renderEntries(archive, entriesArchiveList, true);
+
+  // Helper function to filter entries
+  function filterEntries(entries, categoryFilter, searchFilter) {
+    let filtered = entries.slice();
+    
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(e => e.category === categoryFilter);
+    }
+    
+    if (searchFilter) {
+      const searchVal = searchFilter.toLowerCase();
+      filtered = filtered.filter(e =>
+        (e.name && e.name.toLowerCase().includes(searchVal)) ||
+        (e.reason && e.reason.toLowerCase().includes(searchVal)) ||
+        (e.category && e.category.toLowerCase().includes(searchVal))
+      );
+    }
+    
+    return filtered;
+  }
+
+  // Separate entries by type and status
+  const getOngoing = allEntries.filter(e => e.type === 'get' && e.status !== 'paid');
+  const oweOngoing = allEntries.filter(e => e.type === 'owe' && e.status !== 'paid');
+  const archive = allEntries.filter(e => e.status === 'paid');
+
+  // Apply filters and sorting for "Money I Get" section
+  const getCategoryVal = filterCategoryGet ? filterCategoryGet.value : 'all';
+  const getSearchVal = searchEntriesGet ? searchEntriesGet.value.trim() : '';
+  const getSortVal = sortAmountGet ? sortAmountGet.value : 'none';
+  let filteredGet = filterEntries(getOngoing, getCategoryVal, getSearchVal);
+  filteredGet = sortByAmount(filteredGet, getSortVal);
+
+  // Apply filters and sorting for "Money I Owe" section
+  const oweCategoryVal = filterCategoryOwe ? filterCategoryOwe.value : 'all';
+  const oweSearchVal = searchEntriesOwe ? searchEntriesOwe.value.trim() : '';
+  const oweSortVal = sortAmountOwe ? sortAmountOwe.value : 'none';
+  let filteredOwe = filterEntries(oweOngoing, oweCategoryVal, oweSearchVal);
+  filteredOwe = sortByAmount(filteredOwe, oweSortVal);
+
+  // Apply filters and sorting for Archives section
+  const archiveTypeVal = filterTypeArchive ? filterTypeArchive.value : 'all';
+  const archiveCategoryVal = filterCategoryArchive ? filterCategoryArchive.value : 'all';
+  const archiveSearchVal = searchEntriesArchive ? searchEntriesArchive.value.trim() : '';
+  const archiveSortVal = sortAmountArchive ? sortAmountArchive.value : 'none';
+  let filteredArchive = filterEntries(archive, archiveCategoryVal, archiveSearchVal);
+  if (archiveTypeVal !== 'all') {
+    filteredArchive = filteredArchive.filter(e => e.type === archiveTypeVal);
+  }
+  filteredArchive = sortByAmount(filteredArchive, archiveSortVal);
+
+  // Render the filtered and sorted entries
+  renderEntries(filteredGet, entriesGetOngoingList, false);
+  renderEntries(filteredOwe, entriesOweOngoingList, false);
+  renderEntries(filteredArchive, entriesArchiveList, true);
 }
 
 let allRequests = [];

@@ -11,6 +11,12 @@ body {
   color: #00ff41;
   min-height: 100vh;
   overflow-x: hidden;
+  /* Improve text rendering on mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent text size adjust on mobile */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 .container {
@@ -689,7 +695,7 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
   .access-key-box {
-    padding: 2rem;
+    padding: 1.5rem;
     margin: 1rem;
   }
   
@@ -700,34 +706,228 @@ body {
   }
   
   .dashboard {
-    padding: 1rem;
+    padding: 1rem 0.5rem;
   }
   
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
+  /* Optimize buttons for mobile */
+  .btn-primary, .btn-secondary {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    min-height: 44px; /* Touch-friendly size */
+  }
+  
+  /* Admin buttons in entry actions */
+  .entry-actions .btn-primary, 
+  .entry-actions .btn-edit, 
+  .entry-actions .btn-delete {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.7rem;
+    min-width: 80px;
+    margin-bottom: 0.3rem;
+  }
+  
+  /* Form improvements */
   .form-row {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    gap: 0.8rem;
   }
   
+  .entry-form-container {
+    padding: 1.5rem 1rem;
+    margin: 1rem 0.5rem;
+  }
+  
+  .input-group input, .input-group select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.7rem 0.8rem;
+  }
+  
+  /* Entry items mobile layout */
   .entry-item {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding: 1rem;
+  }
+  
+  .entry-details {
+    width: 100%;
+  }
+  
+  .entry-meta {
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .entry-amount, .entry-category, .entry-status {
+    text-align: left;
+    margin-right: 0;
+    padding: 0.3rem 0;
   }
   
   .entry-actions {
-    justify-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: flex-start;
+    margin-left: 0;
   }
   
+  /* Filters mobile layout */
   .filters {
     flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+  }
+  
+  .filters select, .filters input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.7rem;
     width: 100%;
   }
   
   .entries-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .entries-header h2 {
+    font-size: 1.3rem;
+    text-align: center;
+  }
+  
+  /* Modal improvements */
+  .matrix-modal-content {
+    margin: 1rem;
+    padding: 1.5rem 1rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+  
+  .modal-btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    margin: 0.3rem 0.3rem 0.3rem 0;
+  }
+  
+  /* Theme switcher button mobile */
+  .theme-btn-top {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+    min-width: 80px;
+  }
+  
+  /* User management table */
+  .admin-user-management {
+    padding: 1rem;
+    margin: 1rem 0.5rem;
+    overflow-x: auto;
+  }
+  
+  #user-list {
+    font-size: 0.9rem;
+  }
+  
+  #user-list th, #user-list td {
+    padding: 0.5rem 0.3rem;
+  }
+  
+  .btn-delete-user {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+/* Very small screens (iPhone SE, etc.) */
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 0.5rem 0.3rem;
+  }
+  
+  .entry-form-container {
+    padding: 1rem 0.7rem;
+    margin: 0.5rem 0.2rem;
+  }
+  
+  .entry-form-container h2 {
+    font-size: 1.1rem;
+  }
+  
+  .entries-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .stat-card {
+    padding: 1rem 0.8rem;
+  }
+  
+  .stat-amount {
+    font-size: 1.2rem;
+  }
+  
+  .entry-item {
+    padding: 0.8rem;
+  }
+  
+  .entry-details h4 {
+    font-size: 1rem;
+  }
+  
+  .entry-actions .btn-primary, 
+  .entry-actions .btn-edit, 
+  .entry-actions .btn-delete {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    min-width: 70px;
+  }
+  
+  .matrix-modal-content {
+    margin: 0.5rem;
+    padding: 1rem 0.7rem;
+  }
+  
+  .modal-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.8rem;
+  }
+}
+
+/* Improve touch interactions */
+@media (hover: none) and (pointer: coarse) {
+  /* Touch devices */
+  .btn-primary, .btn-secondary, .modal-btn, .btn-edit, .btn-delete {
+    min-height: 44px; /* Apple's recommended touch target size */
+    min-width: 44px;
+  }
+  
+  .entry-actions .btn-primary, 
+  .entry-actions .btn-edit, 
+  .entry-actions .btn-delete {
+    min-height: 40px;
+    min-width: 70px;
+  }
+  
+  /* Larger tap targets for filters */
+  .filters select, .filters input {
+    min-height: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .btn-primary:hover, .btn-secondary:hover {
+    transform: none;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  
+  .entry-item:hover {
+    transform: none;
   }
 }
 
@@ -838,112 +1038,95 @@ body {
   min-width: 80px;
   text-align: center;
 }
+/* Medium screens (tablets) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .dashboard {
+    padding: 1.5rem 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .entry-form-container {
+    max-width: 100%;
+    margin: 1.5rem 0;
+  }
+  
+  .filters {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  
+  .filters select, .filters input {
+    min-width: 150px;
+  }
+  
+  /* Admin buttons slightly smaller for tablets */
+  .entry-actions .btn-primary, 
+  .entry-actions .btn-edit, 
+  .entry-actions .btn-delete {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+    min-width: 90px;
+  }
+}
+
+/* Small screens and older mobile styles cleanup */
 @media (max-width: 900px) {
   .dashboard {
-    padding: 0.7rem 0.2rem;
+    padding: 1rem 0.5rem;
   }
+  
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 1.2rem;
   }
+  
   .stat-card {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.2rem 0.7rem;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
+    flex-direction: row;
+    align-items: center;
+    padding: 1.2rem;
+    gap: 1rem;
   }
+  
   .stat-icon {
-    margin-bottom: 0.7rem;
-    margin-right: 0;
+    flex-shrink: 0;
   }
+  
   .stat-content h3 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
+  
   .stat-amount {
-    font-size: 1.3rem;
-    word-break: break-all;
+    font-size: 1.4rem;
   }
-  .entry-item {
-    flex-direction: column;
-    gap: 0.7rem;
-    padding: 1rem 0.5rem 0.7rem 0.5rem;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .entry-details h4 {
-    font-size: 1.1rem;
-    word-break: break-word;
-  }
-  .entry-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    width: 100%;
-    min-width: 0;
-  }
-  .entry-amount, .entry-category, .entry-status, .entry-actions, .requests-info {
-    margin-right: 0;
-    margin-bottom: 0.3rem;
-    width: 100%;
-    min-width: 0;
-    text-align: left;
-    word-break: break-all;
-  }
+  
   .entry-form-container {
-    padding: 1.2rem 0.5rem 1rem 0.5rem;
-    max-width: 100vw;
-    min-width: 0;
+    padding: 1.5rem 1rem;
+    margin: 1rem 0;
   }
+  
   .form-row {
     flex-direction: column;
-    gap: 0.7rem;
-    width: 100%;
-    min-width: 0;
+    gap: 0.8rem;
   }
-  .input-group input, .input-group select {
-    font-size: 1rem;
-    padding: 0.5rem 0.7rem;
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-  }
+  
   .filters {
     flex-direction: column;
-    gap: 0.7rem;
-    width: 100%;
-    min-width: 0;
+    gap: 0.8rem;
   }
+  
   .filters select, .filters input {
     width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
+    padding: 0.6rem;
   }
-  .btn-primary, .btn-secondary {
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-  }
+  
   .matrix-modal-content {
-    min-width: 0;
-    width: 95vw;
-    padding: 1.2rem 0.7rem 1rem 0.7rem;
-  }
-  .entry-actions {
-    flex-direction: column;
-    align-items: stretch;
-    margin-left: 0;
-    width: 100%;
-    gap: 0.3rem;
-  }
-  .entry-actions .btn-primary, .entry-actions .btn-edit, .entry-actions .btn-delete {
-    width: 100%;
-    min-width: 0;
-    margin-bottom: 0.3rem;
+    width: 90vw;
+    padding: 1.5rem 1rem;
+    margin: 2rem auto;
   }
 }
 

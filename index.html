@@ -331,16 +331,12 @@
             </div>
           </form>
         </div>
+        <!-- Money I Get Section -->
         <div class="entries-container">
           <div class="entries-header">
-            <h2>Ongoing Transactions</h2>
+            <h2>Receivables</h2>
             <div class="filters">
-              <select id="filter-type">
-                <option value="all">All Types</option>
-                <option value="get">Receivables</option>
-                <option value="owe">Payables</option>
-              </select>
-              <select id="filter-category">
+              <select id="filter-category-get">
                 <option value="all">All Categories</option>
                 <option value="personal">Personal</option>
                 <option value="business">Business</option>
@@ -349,14 +345,68 @@
                 <option value="utilities">Utilities</option>
                 <option value="other">Other</option>
               </select>
-              <input type="text" id="search-entries" placeholder="Search entries...">
+              <select id="sort-amount-get">
+                <option value="none">Sort by Date</option>
+                <option value="asc">Amount: Low to High</option>
+                <option value="desc">Amount: High to Low</option>
+              </select>
+              <input type="text" id="search-entries-get" placeholder="Search receivables...">
             </div>
           </div>
-          <div class="entries-list" id="entries-ongoing"></div>
+          <div class="entries-list" id="entries-get-ongoing"></div>
         </div>
+
+        <!-- Money I Owe Section -->
         <div class="entries-container" style="margin-top:2.5rem;">
           <div class="entries-header">
-            <h2>Archives</h2>
+            <h2>Payables</h2>
+            <div class="filters">
+              <select id="filter-category-owe">
+                <option value="all">All Categories</option>
+                <option value="personal">Personal</option>
+                <option value="business">Business</option>
+                <option value="loan">Loan</option>
+                <option value="rent">Rent</option>
+                <option value="utilities">Utilities</option>
+                <option value="other">Other</option>
+              </select>
+              <select id="sort-amount-owe">
+                <option value="none">Sort by Date</option>
+                <option value="asc">Amount: Low to High</option>
+                <option value="desc">Amount: High to Low</option>
+              </select>
+              <input type="text" id="search-entries-owe" placeholder="Search payables...">
+            </div>
+          </div>
+          <div class="entries-list" id="entries-owe-ongoing"></div>
+        </div>
+
+        <!-- Archives Section -->
+        <div class="entries-container" style="margin-top:2.5rem;">
+          <div class="entries-header">
+            <h2>Archives (Paid Transactions)</h2>
+            <div class="filters">
+              <select id="filter-type-archive">
+                <option value="all">All Types</option>
+                <option value="get">Receivables</option>
+                <option value="owe">Payables</option>
+              </select>
+              <select id="filter-category-archive">
+                <option value="all">All Categories</option>
+                <option value="personal">Personal</option>
+                <option value="business">Business</option>
+                <option value="loan">Loan</option>
+                <option value="rent">Rent</option>
+                <option value="utilities">Utilities</option>
+                <option value="other">Other</option>
+              </select>
+              <select id="sort-amount-archive">
+                <option value="none">Sort by Date</option>
+                <option value="asc">Amount: Low to High</option>
+                <option value="desc">Amount: High to Low</option>
+              </select>
+              <input type="text" id="search-entries-archive" placeholder="Search archives...">
+            </div>
           </div>
           <div class="entries-list" id="entries-archive"></div>
         </div>
