@@ -293,7 +293,7 @@
               </div>
               <div class="input-group">
                 <label for="amount">Amount</label>
-                <input id="amount" type="number" step="0.01" placeholder="0.00" required>
+                <input id="amount" type="number" step="0.01" inputmode="decimal" placeholder="0.00" required>
               </div>
             </div>
             <div class="form-row">
@@ -469,7 +469,8 @@ themeModalClose.onclick = () => {
   themeModal.classList.remove('show');
   themeModal.classList.add('hidden');
 };
-themeModal.onclick = (e) => { if (e.target === themeModal) themeModal.classList.add('hidden'); };
+themeModal.onclick = (e) => { if (e.target === themeModal) { themeModal.classList.remove('show'); themeModal.classList.add('hidden'); } };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { themeModal.classList.remove('show'); themeModal.classList.add('hidden'); } });
 document.querySelectorAll('.theme-choice-btn').forEach(btn => {
   btn.onclick = () => {
     setTheme(btn.getAttribute('data-theme'));

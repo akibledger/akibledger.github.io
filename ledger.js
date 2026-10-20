@@ -208,6 +208,8 @@ if (entryForm) {
       showToast("Please fill all required fields!", "error");
       return;
     }
+    const submitBtn = entryForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
     try {
       await addDoc(ledgerCollection, {
         type,
@@ -228,6 +230,8 @@ if (entryForm) {
       loadEntries();
     } catch (err) {
       showToast(err.message, "error");
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
@@ -450,6 +454,7 @@ notificationBadge.onclick = async () => {
 
 function renderEntries(entries, targetList, isArchive) {
   if (!targetList) return;
+  updateSectionSummary(targetList, entries, isArchive);
   if (!entries.length) {
     targetList.innerHTML = `<div class="no-entries"><i class="fas fa-inbox"></i><p>No entries found</p></div>`;
     return;
@@ -528,6 +533,8 @@ function renderEntries(entries, targetList, isArchive) {
         document.getElementById("date").value = entry.date;
         document.getElementById("category").value = entry.category;
         showToast("Entry loaded for editing. Update and submit to save.", "success");
+        entryFormContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("name").focus({ preventScroll: true });
       };
     });
     document.querySelectorAll(".btn-paid").forEach(btn => {
@@ -694,5 +701,57 @@ async function ensureUserDoc(user) {
     });
   }
 }
+
+// Collapsible sections (open/closed state is remembered; archive starts closed)
+const SECTIONS_KEY = 'akibledger-sections';
+function readSectionState() {
+  try { return JSON.parse(localStorage.getItem(SECTIONS_KEY)) || {}; } catch (e) { return {}; }
+}
+function writeSectionState(state) {
+  try { localStorage.setItem(SECTIONS_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+}
+document.querySelectorAll('.entries-container').forEach(container => {
+  const list = container.querySelector('.entries-list');
+  const title = container.querySelector('.entries-header h2');
+  if (!list || !title) return;
+  const label = title.textContent;
+  title.innerHTML = `<span class="section-chevron" aria-hidden="true"></span><span class="section-title"></span><span class="section-count"></span><span class="section-total"></span>`;
+  title.querySelector('.section-title').textContent = label;
+  title.classList.add('section-toggle');
+  title.setAttribute('role', 'button');
+  title.setAttribute('tabindex', '0');
+  title.setAttribute('aria-controls', list.id);
+  const state = readSectionState();
+  const setCollapsed = collapsed => {
+    container.classList.toggle('collapsed', collapsed);
+    title.setAttribute('aria-expanded', String(!collapsed));
+  };
+  setCollapsed(list.id in state ? state[list.id] : list.id === 'entries-archive');
+  const toggle = () => {
+    const collapsed = !container.classList.contains('collapsed');
+    setCollapsed(collapsed);
+    writeSectionState({ ...readSectionState(), [list.id]: collapsed });
+  };
+  title.addEventListener('click', toggle);
+  title.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+});
+
+// Entry count (and open total) shown in each section header, visible even when collapsed
+function updateSectionSummary(targetList, entries, isArchive) {
+  const title = targetList.closest('.entries-container')?.querySelector('.entries-header h2');
+  if (!title) return;
+  const count = title.querySelector('.section-count');
+  const total = title.querySelector('.section-total');
+  if (count) count.textContent = entries.length;
+  if (total) {
+    total.textContent = isArchive || !entries.length
+      ? ''
+      : new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(entries.reduce((sum, e) => sum + e.amount, 0));
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 loadEntries();
