@@ -1628,6 +1628,39 @@ body .guest-actions a.btn-secondary { background: transparent; color: var(--text
   .legends-grid { grid-template-columns: 1fr; gap: 1.2rem; }
 }
 
+/* Edit form, edit history (all themes; colours come from the theme variables and modal rules) */
+.history-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  opacity: 0.85;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.history-link:hover { opacity: 1; }
+.edit-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; min-width: min(440px, 78vw); }
+.edit-form .input-group { margin-bottom: 0; }
+.edit-form .edit-wide { grid-column: 1 / -1; }
+.edit-form .edit-check { display: flex; align-items: center; gap: 0.4rem; margin: 0.4rem 0 0; font-size: 0.85rem; }
+.edit-form .edit-check input { width: auto; margin: 0; min-height: 0; }
+.edit-actions { grid-column: 1 / -1; display: flex; gap: 0.6rem; margin-top: 0.4rem; }
+.edit-actions .modal-btn { margin: 0; }
+.matrix-modal-body .modal-btn.cancel { background: transparent; color: #00ff41; border: 1px solid #00ff41; box-shadow: none; }
+body.theme-bonita .matrix-modal-body .modal-btn.cancel { background: transparent; color: #d72660; border: 1px solid #ff7edb; }
+.history-subject { font-size: 0.9rem; margin: 0 0 0.8rem; opacity: 0.85; }
+.history-item { padding: 0.7rem 0; border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+.history-when { font-weight: 700; font-size: 0.9rem; }
+.history-note { font-size: 0.85rem; margin: 0.2rem 0; opacity: 0.9; }
+.history-changes { list-style: none; margin: 0.3rem 0 0; padding: 0; font-size: 0.9rem; }
+.history-changes li { margin: 0.15rem 0; overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+  .edit-form { grid-template-columns: 1fr; min-width: 0; }
+  body .history-link { order: 7; }
+}
+
 /* Theme picker buttons (all themes) */
 body .theme-choice-btn { line-height: 1.2; }
 body .theme-corporate-btn {
@@ -1929,6 +1962,12 @@ body.theme-corporate .matrix-modal-body h3,
 body.theme-corporate .matrix-modal-body b { color: var(--c-ink) !important; }
 body.theme-corporate .matrix-modal-body [style*="color:#00ff41"] { color: var(--c-ink) !important; }
 body.theme-corporate .theme-choice-btn { border-radius: 3px; }
+
+body.theme-corporate .matrix-modal-body .modal-btn.cancel { background: transparent !important; color: var(--c-ink) !important; border: 1px solid #cfc6b2 !important; }
+body.theme-corporate .matrix-modal-body .modal-btn.cancel:hover { background: rgba(70, 52, 28, 0.06) !important; }
+body.theme-corporate .history-link { color: var(--c-brass-ink); }
+body.theme-corporate .history-item { border-top-color: var(--c-hair); }
+body.theme-corporate .history-when { color: var(--c-ink) !important; }
 
 /* Toast */
 body.theme-corporate .toast {

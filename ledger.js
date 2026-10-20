@@ -596,7 +596,7 @@ function renderEntries(entries, targetList, isArchive) {
     // Admin controls (show delete for archive too)
     if ((currentUserRole === "admin" && (!isArchive || isArchive))) {
       actions = `
-        ${!isArchive ? `<button class="btn-edit" data-id="${entry.id}" title="Edit Entry"><i class="fas fa-edit"></i> <span style='font-size:0.95rem;'>Edit</span></button>` : ''}
+        <button class="btn-edit" data-id="${escapeHTML(entry.id)}" title="Edit Entry"><i class="fas fa-edit"></i> <span style='font-size:0.95rem;'>Edit</span></button>
         <button class="btn-delete" data-id="${entry.id}" title="Delete Entry"><i class="fas fa-trash"></i> <span style='font-size:0.95rem;'>Delete</span></button>
         ${!isArchive && entry.status !== "paid" ? `<button class="btn-primary btn-paid" data-id="${entry.id}" title="Mark as Paid">Mark as Paid</button>` : ""}
       `;
@@ -614,6 +614,10 @@ function renderEntries(entries, targetList, isArchive) {
     } else {
       requestsInfo = `<div class="requests-info">Requests: ${entry.confirmationRequests?.length || 0}</div>`;
     }
+    const editCount = Array.isArray(entry.editHistory) ? entry.editHistory.length : 0;
+    const historyLink = editCount
+      ? `<button type="button" class="history-link" data-id="${escapeHTML(entry.id)}" title="View edit history">Edited${editCount > 1 ? ` ×${editCount}` : ''}</button>`
+      : '';
     entryEl.innerHTML = `
       <div class="entry-details">
         <h4>${escapeHTML(entry.name)}</h4>
@@ -628,6 +632,7 @@ function renderEntries(entries, targetList, isArchive) {
           ${actions}
         </div>
         ${requestsInfo}
+        ${historyLink}
       </div>
       ${entry.paidMessage && isArchive ? `<div class='matrix-modal-body' style='margin-top:0.7em;'><b>Paid Message:</b><br><span style='color:#baffc9;'>${escapeHTML(entry.paidMessage)}</span></div>` : ''}
     `;
@@ -643,24 +648,6 @@ function renderEntries(entries, targetList, isArchive) {
           showToast("Entry deleted!", "success");
           loadEntries();
         }
-      };
-    });
-    document.querySelectorAll(".btn-edit").forEach(btn => {
-      btn.onclick = async e => {
-        if (currentUserRole !== "admin") return;
-        const entries = await getDocs(ledgerCollection);
-        const entry = Array.from(entries.docs).find(en => en.id === btn.dataset.id)?.data();
-        if (!entry) return;
-        await deleteDoc(doc(db, "ledgerEntries", btn.dataset.id));
-        document.getElementById("type").value = entry.type;
-        document.getElementById("name").value = entry.name;
-        document.getElementById("amount").value = entry.amount;
-        document.getElementById("reason").value = entry.reason;
-        document.getElementById("date").value = entry.date;
-        document.getElementById("category").value = entry.category;
-        showToast("Entry loaded for editing. Update and submit to save.", "success");
-        entryFormContainer.scrollIntoView({ behavior: "smooth", block: "start" });
-        document.getElementById("name").focus({ preventScroll: true });
       };
     });
     document.querySelectorAll(".btn-paid").forEach(btn => {
@@ -828,6 +815,132 @@ async function fetchUserRole(user) {
   }
   return "user";
 }
+
+// ---- Editing and edit history -------------------------------------------------
+// Edits update the entry in place (works for ongoing and archived entries) and append a record
+// to the entry's editHistory array: when, who, an optional note, and each changed field (from -> to).
+const bdt = new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' });
+const EDIT_FIELDS = ['type', 'name', 'amount', 'reason', 'date', 'category', 'status', 'paidMessage'];
+const FIELD_LABELS = { type: 'Type', name: 'Name', amount: 'Amount', reason: 'Reason', date: 'Date', category: 'Category', status: 'Status', paidMessage: 'Paid message' };
+const CATEGORIES = [['personal', 'Personal'], ['business', 'Business'], ['loan', 'Loan'], ['rent', 'Rent'], ['utilities', 'Utilities'], ['other', 'Other']];
+
+function openEditModal(entry) {
+  const options = (list, value) => list.map(([v, l]) => `<option value="${escapeHTML(v)}"${v === value ? ' selected' : ''}>${escapeHTML(l)}</option>`).join('');
+  const categories = CATEGORIES.some(([v]) => v === entry.category) ? CATEGORIES : [...CATEGORIES, [entry.category, entry.category]];
+  const dateUnknown = !entry.date || entry.date === "I don't remember";
+  showModal(`
+    <h3>Edit Entry</h3>
+    <form id="edit-form" class="edit-form">
+      <div class="input-group"><label for="edit-type">Type</label>
+        <select id="edit-type">${options([['get', 'I Get (+)'], ['owe', 'I Owe (-)']], entry.type)}</select></div>
+      <div class="input-group"><label for="edit-amount">Amount</label>
+        <input id="edit-amount" type="number" step="0.01" inputmode="decimal" value="${Number(entry.amount)}" required></div>
+      <div class="input-group edit-wide"><label for="edit-name">Person/Entity</label>
+        <input id="edit-name" type="text" value="${escapeHTML(entry.name)}" required></div>
+      <div class="input-group edit-wide"><label for="edit-reason">Reason/Description</label>
+        <input id="edit-reason" type="text" value="${escapeHTML(entry.reason)}" required></div>
+      <div class="input-group"><label for="edit-date">Date</label>
+        <input id="edit-date" type="date" value="${dateUnknown ? '' : escapeHTML(entry.date)}"${dateUnknown ? ' disabled' : ''}>
+        <label class="edit-check"><input type="checkbox" id="edit-date-unknown"${dateUnknown ? ' checked' : ''}> I don't remember</label></div>
+      <div class="input-group"><label for="edit-category">Category</label>
+        <select id="edit-category">${options(categories, entry.category)}</select></div>
+      <div class="input-group edit-wide"><label for="edit-status">Status</label>
+        <select id="edit-status">${options([['pending', 'Pending'], ['paid', 'Paid']], entry.status === 'paid' ? 'paid' : 'pending')}</select></div>
+      <div class="input-group edit-wide" id="edit-paid-group"><label for="edit-paid-message">Paid message</label>
+        <input id="edit-paid-message" type="text" value="${escapeHTML(entry.paidMessage || '')}"></div>
+      <div class="input-group edit-wide"><label for="edit-note">Why are you changing this? (optional)</label>
+        <input id="edit-note" type="text" placeholder="Shown in the edit history"></div>
+      <div class="edit-actions">
+        <button type="submit" class="modal-btn" id="edit-save">Save changes</button>
+        <button type="button" class="modal-btn cancel" id="edit-cancel">Cancel</button>
+      </div>
+    </form>`);
+  const $ = id => document.getElementById(id);
+  const syncPaid = () => { $('edit-paid-group').classList.toggle('hidden', $('edit-status').value !== 'paid'); };
+  syncPaid();
+  $('edit-status').onchange = syncPaid;
+  $('edit-date-unknown').onchange = () => { $('edit-date').disabled = $('edit-date-unknown').checked; };
+  $('edit-cancel').onclick = closeModal;
+  $('edit-form').onsubmit = async e => {
+    e.preventDefault();
+    if (currentUserRole !== 'admin') return;
+    const status = $('edit-status').value;
+    const next = {
+      type: $('edit-type').value,
+      name: $('edit-name').value.trim(),
+      amount: parseFloat($('edit-amount').value),
+      reason: $('edit-reason').value.trim(),
+      date: $('edit-date-unknown').checked ? "I don't remember" : $('edit-date').value,
+      category: $('edit-category').value,
+      status,
+      paidMessage: status === 'paid' ? $('edit-paid-message').value.trim() : ''
+    };
+    if (!next.name || !next.reason || !next.date || !Number.isFinite(next.amount) || next.amount <= 0) {
+      showToast('Please fill all required fields!', 'error');
+      return;
+    }
+    const changes = {};
+    EDIT_FIELDS.forEach(field => {
+      const from = entry[field] ?? '';
+      if (String(from) !== String(next[field])) changes[field] = { from, to: next[field] };
+    });
+    if (!Object.keys(changes).length) {
+      showToast('No changes to save.', 'error');
+      return;
+    }
+    const record = { at: new Date().toISOString(), by: currentUser ? currentUser.uid : '', note: $('edit-note').value.trim(), changes };
+    const saveBtn = $('edit-save');
+    saveBtn.disabled = true;
+    try {
+      await updateDoc(doc(db, 'ledgerEntries', entry.id), { ...next, editHistory: arrayUnion(record) });
+      closeModal();
+      showToast('Entry updated!', 'success');
+      loadEntries();
+    } catch (err) {
+      saveBtn.disabled = false;
+      showToast(err.message, 'error');
+    }
+  };
+}
+
+function formatHistoryValue(field, value) {
+  if (value === '' || value === null || value === undefined) return '—';
+  if (field === 'amount') return escapeHTML(bdt.format(Number(value)));
+  if (field === 'date') return escapeHTML(formatDate(value));
+  if (field === 'type') return value === 'get' ? 'I Get' : 'I Owe';
+  return escapeHTML(String(value));
+}
+
+function openHistoryModal(entry) {
+  const history = [...(entry.editHistory || [])].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const items = history.map(h => {
+    const when = new Date(h.at);
+    const whenText = isNaN(when) ? '' : when.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+    const lines = Object.entries(h.changes || {}).map(([field, c]) =>
+      `<li><b>${escapeHTML(FIELD_LABELS[field] || field)}:</b> ${formatHistoryValue(field, c.from)} → ${formatHistoryValue(field, c.to)}</li>`).join('');
+    return `<div class="history-item">
+      <div class="history-when">${escapeHTML(whenText)}</div>
+      ${h.note ? `<div class="history-note">“${escapeHTML(h.note)}”</div>` : ''}
+      <ul class="history-changes">${lines}</ul>
+    </div>`;
+  }).join('');
+  showModal(`<h3>Edit history</h3><p class="history-subject">${escapeHTML(entry.name)} · ${escapeHTML(entry.reason)}</p>${items || '<p>No edits yet.</p>'}`);
+}
+
+document.addEventListener('click', e => {
+  const editBtn = e.target.closest('.btn-edit');
+  if (editBtn) {
+    if (currentUserRole !== 'admin') return;
+    const entry = allEntries.find(en => en.id === editBtn.dataset.id);
+    if (entry) openEditModal(entry);
+    return;
+  }
+  const historyBtn = e.target.closest('.history-link');
+  if (historyBtn) {
+    const entry = allEntries.find(en => en.id === historyBtn.dataset.id);
+    if (entry) openHistoryModal(entry);
+  }
+});
 
 // Collapsible sections (open/closed state is remembered, except the archive, which always starts closed)
 const SECTIONS_KEY = 'akibledger-sections';
