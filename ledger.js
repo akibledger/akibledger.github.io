@@ -766,7 +766,7 @@ async function fetchUserRole(user) {
   return "user";
 }
 
-// Collapsible sections (open/closed state is remembered; archive starts closed)
+// Collapsible sections (open/closed state is remembered, except the archive, which always starts closed)
 const SECTIONS_KEY = 'akibledger-sections';
 function readSectionState() {
   try { return JSON.parse(localStorage.getItem(SECTIONS_KEY)) || {}; } catch (e) { return {}; }
@@ -790,11 +790,12 @@ document.querySelectorAll('.entries-container').forEach(container => {
     container.classList.toggle('collapsed', collapsed);
     title.setAttribute('aria-expanded', String(!collapsed));
   };
-  setCollapsed(list.id in state ? state[list.id] : list.id === 'entries-archive');
+  const alwaysClosed = list.id === 'entries-archive';
+  setCollapsed(alwaysClosed || (list.id in state ? state[list.id] : false));
   const toggle = () => {
     const collapsed = !container.classList.contains('collapsed');
     setCollapsed(collapsed);
-    writeSectionState({ ...readSectionState(), [list.id]: collapsed });
+    if (!alwaysClosed) writeSectionState({ ...readSectionState(), [list.id]: collapsed });
   };
   title.addEventListener('click', toggle);
   title.addEventListener('keydown', e => {
