@@ -237,7 +237,7 @@
           </div>
           <div class="user-info">
             <span id="user-email"></span>
-            <button id="logout-btn" class="btn-secondary hidden">
+            <button id="logout-btn" class="btn-secondary">
               <i class="fas fa-sign-out-alt"></i> Logout
             </button>
             <button id="login-btn" class="btn-secondary">
@@ -247,6 +247,14 @@
         </div>
       </header>
       <div class="dashboard">
+        <div id="guest-banner" class="guest-banner" role="status">
+          <h2>You're not logged in</h2>
+          <p>You're viewing this ledger as a guest. Anyone can see the entries below. Log in or sign up to request payment confirmation on an entry you've paid. Only the admin can add or change entries.</p>
+          <div class="guest-actions">
+            <a class="btn-primary" href="login.html">Log in</a>
+            <a class="btn-secondary" href="signup.html">Sign up</a>
+          </div>
+        </div>
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
@@ -353,7 +361,7 @@
               <input type="text" id="search-entries-get" placeholder="Search receivables...">
             </div>
           </div>
-          <div class="entries-list" id="entries-get-ongoing"></div>
+          <div class="entries-list" id="entries-get-ongoing"><div class="list-loading"><span class="spinner" aria-hidden="true"></span>Loading entries…</div></div>
         </div>
 
         <!-- Money I Owe Section -->
@@ -378,7 +386,7 @@
               <input type="text" id="search-entries-owe" placeholder="Search payables...">
             </div>
           </div>
-          <div class="entries-list" id="entries-owe-ongoing"></div>
+          <div class="entries-list" id="entries-owe-ongoing"><div class="list-loading"><span class="spinner" aria-hidden="true"></span>Loading entries…</div></div>
         </div>
 
         <!-- Archives Section -->
@@ -408,7 +416,7 @@
               <input type="text" id="search-entries-archive" placeholder="Search archives...">
             </div>
           </div>
-          <div class="entries-list" id="entries-archive"></div>
+          <div class="entries-list" id="entries-archive"><div class="list-loading"><span class="spinner" aria-hidden="true"></span>Loading entries…</div></div>
         </div>
         <div id="admin-user-management" class="admin-user-management hidden">
           <h2>User Management</h2>
@@ -450,6 +458,20 @@
       </div>
     </div>
   </div>
+  <script>
+// Paint the last known auth state right away; ledger.js confirms it once Firebase answers.
+(function () {
+  var hint = null;
+  try { hint = JSON.parse(localStorage.getItem('akibledger-auth')); } catch (e) {}
+  if (hint && hint.email) {
+    document.documentElement.dataset.auth = 'user';
+    document.getElementById('user-email').textContent = hint.email;
+    if (hint.role === 'admin') document.getElementById('entry-form-container').classList.remove('hidden');
+  } else {
+    document.documentElement.dataset.auth = 'guest';
+  }
+})();
+  </script>
   <script type="module" src="ledger.js"></script>
   <script>
 // Theme switcher modal logic

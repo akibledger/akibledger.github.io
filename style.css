@@ -1552,3 +1552,52 @@ body.theme-bonita .matrix-modal-body b {
   }
   body .entry-actions .btn-delete { color: var(--danger); }
 }
+
+/* Auth state (data-auth is set on <html> by index.html and kept current by ledger.js) */
+html:not([data-auth="user"]) #logout-btn,
+html[data-auth="user"] #login-btn { display: none !important; }
+
+.guest-banner {
+  display: none;
+  margin: 0 auto 1.2rem;
+  padding: 1rem 1.2rem;
+  border: 1.5px dashed var(--accent);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+html[data-auth="guest"] .guest-banner { display: block; }
+.guest-banner h2 { font-size: 1.15rem; margin-bottom: 0.4rem; color: var(--accent); letter-spacing: 1px; }
+body.theme-bonita .guest-banner h2 { color: #d72660; }
+.guest-banner p { color: var(--text-secondary); line-height: 1.5; }
+.guest-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+.guest-actions a {
+  display: inline-block;
+  width: auto;
+  flex: 1 1 120px;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  font-size: 1rem;
+  border-radius: 6px;
+}
+body .guest-actions a.btn-secondary { background: transparent; color: var(--text-main); border: 1.5px solid var(--accent); box-shadow: none; }
+.no-entries a { color: inherit; text-decoration: underline; }
+.no-entries .retry-btn { width: auto; margin: 0.8rem 0 0; padding: 0.5rem 1.2rem; }
+
+/* Loading spinner */
+.list-loading { padding: 1.2rem 0; text-align: center; opacity: 0.85; }
+.spinner {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.6rem;
+  vertical-align: -0.2em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.5s; } }

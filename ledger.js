@@ -43,8 +43,31 @@ notificationBadge.style.boxShadow = '0 0 8px #00ff41cc';
 notificationBadge.style.cursor = 'pointer';
 userEmail.parentNode.insertBefore(notificationBadge, userEmail.nextSibling);
 
+// Last known auth state, so the page can paint "logged in" immediately instead of
+// flashing "logged out" until Firebase finishes restoring the session. It only drives
+// the UI; Firestore rules still decide what is actually allowed.
+const AUTH_HINT_KEY = 'akibledger-auth';
+function readAuthHint() {
+  try {
+    const hint = JSON.parse(localStorage.getItem(AUTH_HINT_KEY));
+    return hint && hint.email ? hint : null;
+  } catch (e) { return null; }
+}
+function writeAuthHint(hint) {
+  try {
+    if (hint) localStorage.setItem(AUTH_HINT_KEY, JSON.stringify(hint));
+    else localStorage.removeItem(AUTH_HINT_KEY);
+  } catch (e) { /* storage unavailable */ }
+}
+function setAuthUI(email) {
+  document.documentElement.dataset.auth = email ? 'user' : 'guest';
+  userEmail.textContent = email || '';
+}
+const authHint = readAuthHint();
+
 let currentUser = null;
-let currentUserRole = null;
+let currentUserRole = authHint ? authHint.role || null : null;
+let authResolved = false;
 
 loginBtn.addEventListener("click", () => {
   window.location.href = "login.html";
@@ -146,31 +169,31 @@ if (openUserMgmtBtn && adminUserMgmt) {
 }
 
 onAuthStateChanged(auth, async user => {
+  authResolved = true;
   currentUser = user;
-  if (user) {
-    await ensureUserDoc(user);
-    userEmail.textContent = user.email;
-    logoutBtn.classList.remove("hidden");
-    loginBtn.classList.add("hidden");
-    // Fetch user role from Firestore
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    currentUserRole = userDoc.exists() ? userDoc.data().role : null;
-    if (currentUserRole === "admin") {
-      entryFormContainer.classList.remove("hidden");
-    } else {
-      entryFormContainer.classList.add("hidden");
-    }
-    updateUserMgmtButton();
-    loadEntries();
-  } else {
+  if (!user) {
     currentUserRole = null;
-    userEmail.textContent = "";
-    logoutBtn.classList.add("hidden");
-    loginBtn.classList.remove("hidden");
+    writeAuthHint(null);
+    setAuthUI(null);
     entryFormContainer.classList.add("hidden");
     updateUserMgmtButton();
-    loadEntries();
+    if (entriesState === 'error') showLoadError(); else refreshEntryViews();
+    return;
   }
+  // Email is known right away; the role needs a Firestore read.
+  setAuthUI(user.email);
+  let role = currentUserRole;
+  try {
+    role = await fetchUserRole(user);
+  } catch (err) {
+    // Offline or read failed: keep the last known role
+  }
+  if (currentUser !== user) return; // signed out or switched while waiting
+  currentUserRole = role;
+  writeAuthHint({ email: user.email, role });
+  entryFormContainer.classList.toggle("hidden", role !== "admin");
+  updateUserMgmtButton();
+  if (entriesState === 'error') loadEntries(); else refreshEntryViews();
 });
 
 // Add logic for 'I don't remember' date option
@@ -262,24 +285,64 @@ if (sortAmountGet) sortAmountGet.addEventListener('change', applyFilters);
 if (sortAmountOwe) sortAmountOwe.addEventListener('change', applyFilters);
 if (sortAmountArchive) sortAmountArchive.addEventListener('change', applyFilters);
 
+let entriesState = 'idle'; // idle | loading | loaded | error
+let entriesError = null;
+const LOADING_HTML = `<div class="list-loading"><span class="spinner" aria-hidden="true"></span>Loading entries…</div>`;
+
 async function loadEntries() {
-  if (entriesList) entriesList.innerHTML = "<div>Loading...</div>";
-  if (entriesGetOngoingList) entriesGetOngoingList.innerHTML = "<div>Loading...</div>";
-  if (entriesOweOngoingList) entriesOweOngoingList.innerHTML = "<div>Loading...</div>";
-  if (entriesArchiveList) entriesArchiveList.innerHTML = "<div>Loading...</div>";
-  const q = query(ledgerCollection, orderBy("createdAt", "desc"));
-  const snapshot = await getDocs(q);
-  allEntries = [];
-  allRequests = [];
-  snapshot.forEach(docSnap => {
-    const entry = { id: docSnap.id, ...docSnap.data() };
-    allEntries.push(entry);
-    if (entry.confirmationRequests && entry.confirmationRequests.length > 0 && entry.status !== 'paid') {
-      allRequests.push({ entryId: entry.id, requests: entry.confirmationRequests });
+  // Only blank the lists on the first load; later refreshes keep the old rows until new data arrives
+  const firstLoad = entriesState !== 'loaded';
+  entriesState = 'loading';
+  if (firstLoad) {
+    [entriesList, entriesGetOngoingList, entriesOweOngoingList, entriesArchiveList].forEach(el => {
+      if (el) el.innerHTML = LOADING_HTML;
+    });
+  }
+  try {
+    const q = query(ledgerCollection, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    allEntries = [];
+    allRequests = [];
+    snapshot.forEach(docSnap => {
+      const entry = { id: docSnap.id, ...docSnap.data() };
+      allEntries.push(entry);
+      if (entry.confirmationRequests && entry.confirmationRequests.length > 0 && entry.status !== 'paid') {
+        allRequests.push({ entryId: entry.id, requests: entry.confirmationRequests });
+      }
+    });
+    entriesState = 'loaded';
+    applyFilters();
+    updateStats(allEntries);
+    updateAdminNotification();
+  } catch (err) {
+    console.error('Failed to load entries', err);
+    if (!firstLoad) {
+      entriesState = 'loaded';
+      showToast("Couldn't refresh entries.", "error");
+      return;
     }
+    entriesState = 'error';
+    entriesError = err;
+    // Before auth resolves a failure may just be "not signed in yet"; the auth callback retries or reports it
+    if (authResolved) showLoadError();
+  }
+}
+
+function showLoadError() {
+  const needsLogin = entriesError && entriesError.code === 'permission-denied' && !currentUser;
+  const html = needsLogin
+    ? `<div class="no-entries"><p><b>Log in to view entries.</b></p><p><a href="login.html">Log in</a> or <a href="signup.html">sign up</a> to see this ledger.</p></div>`
+    : `<div class="no-entries"><p>Couldn't load entries. Check your connection and try again.</p><button class="btn-secondary retry-btn" type="button">Try again</button></div>`;
+  [entriesList, entriesGetOngoingList, entriesOweOngoingList, entriesArchiveList].forEach(el => {
+    if (el) el.innerHTML = html;
   });
+  document.querySelectorAll('.retry-btn').forEach(btn => { btn.onclick = () => loadEntries(); });
+}
+
+// Re-render from memory (no refetch) once the user or role is known
+function refreshEntryViews() {
+  if (entriesState !== 'loaded') return;
   applyFilters();
-  updateStats(allEntries);
   updateAdminNotification();
 }
 
@@ -690,16 +753,17 @@ function escapeHTML(str) {
   }[m]));
 }
 
-// Ensure Firestore user doc exists for every login/signup
-async function ensureUserDoc(user) {
+// Reads the user's role, creating a default 'user' doc on first login (one read in the common case)
+async function fetchUserRole(user) {
   const userRef = doc(db, "users", user.uid);
   const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) {
-    await setDoc(userRef, {
-      email: user.email,
-      role: "user"
-    });
+  if (userSnap.exists()) return userSnap.data().role || null;
+  try {
+    await setDoc(userRef, { email: user.email, role: "user" });
+  } catch (err) {
+    // Rules may block self-creation; treat as a plain user
   }
+  return "user";
 }
 
 // Collapsible sections (open/closed state is remembered; archive starts closed)
@@ -754,4 +818,5 @@ function updateSectionSummary(targetList, entries, isArchive) {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+updateUserMgmtButton();
 loadEntries();

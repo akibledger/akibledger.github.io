@@ -1,13 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /ledgerEntries/{entryId} {
-      allow read: if true;
-      allow write, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+    function isSignedIn() {
+      return request.auth != null;
     }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /ledgerEntries/{entryId} {
+      // Anyone can view the ledger (see README). Change to isSignedIn() to require login.
+      allow read: if true;
+
+      // Only admins add or delete entries
+      allow create, delete: if isAdmin();
+
+      // Admins can change anything. A verified user may only touch the
+      // confirmationRequests list, and may add at most one request per write.
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && request.auth.token.email_verified == true
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmationRequests'])
+            && request.resource.data.confirmationRequests is list
+            && request.resource.data.confirmationRequests.size() <= resource.data.get('confirmationRequests', []).size() + 1
+            && request.resource.data.confirmationRequests.size() <= 50);
+    }
+
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      allow write, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // A user can read their own doc; admins can read all (user management)
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+
+      // Self-signup: own doc only, and never as admin
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user';
+
+      // Users may update their own doc but never change their role
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && request.auth.uid == userId
+            && request.resource.data.role == resource.data.role);
+
+      allow delete: if isAdmin();
+    }
+
+    // Everything else is closed
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
