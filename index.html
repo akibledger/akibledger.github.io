@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Akib Ledger - Dashboard</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#000000">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body { background: #000; font-family: 'Share Tech Mono', monospace; }
     .matrix-bg {
@@ -339,6 +340,14 @@
             </div>
           </form>
         </div>
+        <!-- Legends: biggest lenders and borrowers, all time -->
+        <div class="entries-container legends-container" style="margin-bottom:2.5rem;">
+          <div class="entries-header">
+            <h2>Legends</h2>
+          </div>
+          <div class="entries-list" id="legends-list"><div class="list-loading"><span class="spinner" aria-hidden="true"></span>Loading entries…</div></div>
+        </div>
+
         <!-- Money I Get Section -->
         <div class="entries-container">
           <div class="entries-header">
@@ -442,17 +451,20 @@
       <div id="matrix-modal-body"></div>
     </div>
   </div>
-  <div id="theme-modal" class="matrix-modal hidden">
+  <div id="theme-modal" class="matrix-modal hidden" role="dialog" aria-modal="true" aria-labelledby="theme-modal-title">
     <div class="matrix-modal-content">
-      <span id="theme-modal-close" class="matrix-modal-close">&times;</span>
+      <span id="theme-modal-close" class="matrix-modal-close" role="button" aria-label="Close">&times;</span>
       <div id="theme-modal-body">
-        <h3 style="margin-bottom:1.2rem;">Choose a Theme</h3>
-        <div style="display:flex;flex-direction:column;gap:1.2rem;">
+        <h3 id="theme-modal-title" style="margin-bottom:1.2rem;">Choose a Theme</h3>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
           <button class="theme-choice-btn theme-sigma-btn" data-theme="theme-sigma">
             Matrix
           </button>
           <button class="theme-choice-btn theme-bonita-btn" data-theme="theme-bonita">
             Bonita
+          </button>
+          <button class="theme-choice-btn theme-corporate-btn" data-theme="theme-corporate">
+            Corporate Slave
           </button>
         </div>
       </div>
@@ -474,35 +486,67 @@
   </script>
   <script type="module" src="ledger.js"></script>
   <script>
-// Theme switcher modal logic
+// Theme switcher
+const THEME_KEY = 'akibledger-theme';
+const THEME_COLORS = { 'theme-sigma': '#000000', 'theme-bonita': '#fff6fd', 'theme-corporate': '#f2ece0' };
+const DEFAULT_THEME = 'theme-sigma';
 const themeBtn = document.getElementById('theme-switcher-btn');
 const themeModal = document.getElementById('theme-modal');
 const themeModalClose = document.getElementById('theme-modal-close');
-function setTheme(theme) {
-  document.body.classList.remove('theme-sigma', 'theme-bonita');
-  document.body.classList.add(theme);
-  localStorage.setItem('akibledger-theme', theme);
+let welcomeMode = false;
+
+function readTheme() { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } }
+function writeTheme(theme) { try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* storage unavailable */ } }
+function storageWorks() {
+  try { localStorage.setItem('akibledger-test', '1'); localStorage.removeItem('akibledger-test'); return true; } catch (e) { return false; }
 }
-themeBtn.onclick = () => {
+function currentTheme() {
+  return Object.keys(THEME_COLORS).find(t => document.body.classList.contains(t)) || DEFAULT_THEME;
+}
+function setTheme(theme, persist = true, animate = false) {
+  if (!THEME_COLORS[theme]) theme = DEFAULT_THEME;
+  const root = document.documentElement;
+  if (animate) {
+    root.classList.add('theme-transition');
+    setTimeout(() => root.classList.remove('theme-transition'), 600);
+  }
+  document.body.classList.remove(...Object.keys(THEME_COLORS));
+  document.body.classList.add(theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_COLORS[theme]);
+  if (persist) writeTheme(theme);
+  document.querySelectorAll('.theme-choice-btn').forEach(btn => {
+    btn.setAttribute('aria-pressed', String(btn.getAttribute('data-theme') === theme));
+  });
+}
+function openThemeModal(welcome) {
+  welcomeMode = !!welcome;
   themeModal.classList.add('show');
   themeModal.classList.remove('hidden');
-};
-themeModalClose.onclick = () => {
+}
+function closeThemeModal() {
   themeModal.classList.remove('show');
   themeModal.classList.add('hidden');
-};
-themeModal.onclick = (e) => { if (e.target === themeModal) { themeModal.classList.remove('show'); themeModal.classList.add('hidden'); } };
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { themeModal.classList.remove('show'); themeModal.classList.add('hidden'); } });
+  // Dismissing the welcome popup keeps the current theme and stops it from reappearing
+  if (welcomeMode) { welcomeMode = false; writeTheme(currentTheme()); }
+}
+themeBtn.onclick = () => openThemeModal(false);
+themeModalClose.onclick = closeThemeModal;
+themeModal.onclick = (e) => { if (e.target === themeModal) closeThemeModal(); };
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && themeModal.classList.contains('show')) closeThemeModal();
+});
 document.querySelectorAll('.theme-choice-btn').forEach(btn => {
   btn.onclick = () => {
-    setTheme(btn.getAttribute('data-theme'));
-    themeModal.classList.remove('show');
-    themeModal.classList.add('hidden');
+    welcomeMode = false;
+    setTheme(btn.getAttribute('data-theme'), true, true);
+    closeThemeModal();
   };
 });
-// On load
-const savedTheme = localStorage.getItem('akibledger-theme') || 'theme-sigma';
-setTheme(savedTheme);
+// On load: first-time visitors (nothing saved, and we can remember their choice) get the picker
+const savedTheme = readTheme();
+setTheme(savedTheme || DEFAULT_THEME, false);
+if (!savedTheme && storageWorks()) setTimeout(() => openThemeModal(true), 400);
 </script>
 </body>
 </html>

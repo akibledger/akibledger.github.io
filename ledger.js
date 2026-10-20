@@ -312,6 +312,7 @@ async function loadEntries() {
     });
     entriesState = 'loaded';
     applyFilters();
+    renderLegends(allEntries);
     updateStats(allEntries);
     updateAdminNotification();
   } catch (err) {
@@ -337,6 +338,68 @@ function showLoadError() {
     if (el) el.innerHTML = html;
   });
   document.querySelectorAll('.retry-btn').forEach(btn => { btn.onclick = () => loadEntries(); });
+  if (legendsList) legendsList.innerHTML = `<div class="no-entries"><p>Unavailable.</p></div>`;
+}
+
+// Text emoticons such as "<3", ":)", ":D", "xD", "^_^" (digits and letters in them would survive the symbol strip below)
+const EMOTICON = /<\/?3+|(^|\s)(?:[:;=][-^o']?[)(\][DdPpOo*\/\\|3]+|[xX]D+|\^[_.-]?\^)(?=\s|$)/g;
+
+// Same person, different decoration ("Ittehad" vs "Ittehad 👑" vs "Noki <3"): compare names with emoji, emoticons,
+// symbols, punctuation, spaces and case removed. Letters and combining marks are kept so non-Latin names (e.g. Bengali) stay intact.
+function personKey(name) {
+  const key = name
+    .replace(EMOTICON, '$1')
+    .replace(/[\uFE00-\uFE0F\u200D]/g, '')
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, '')
+    .toLowerCase();
+  return key || name.toLowerCase();
+}
+
+// Legends: top 5 people, all time (paid and unpaid). Ranked mostly by how often they transact
+// with Akib (score = transactions x sqrt(total)), so one big one-off can't top the list alone.
+// "I get" entries are money Akib lent out; "I owe" entries are money Akib borrowed.
+const legendsList = document.getElementById('legends-list');
+function renderLegends(entries) {
+  if (!legendsList) return;
+  const money = n => new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT' }).format(n);
+  const top = type => {
+    const totals = new Map();
+    entries.forEach(e => {
+      const name = (e.name || '').trim();
+      const amount = Number(e.amount);
+      if (e.type !== type || !name || !Number.isFinite(amount)) return;
+      const key = personKey(name);
+      const row = totals.get(key) || { name, total: 0, count: 0 }; // entries arrive newest first, so the newest spelling wins
+      row.total += amount;
+      row.count += 1;
+      totals.set(key, row);
+    });
+    return [...totals.values()]
+      .map(r => ({ ...r, score: r.count * Math.sqrt(r.total) }))
+      .sort((a, b) => b.score - a.score || b.count - a.count || b.total - a.total || a.name.localeCompare(b.name))
+      .slice(0, 5);
+  };
+  const column = (title, caption, rows) => {
+    const max = rows.length ? rows[0].score : 0;
+    const items = rows.map((r, i) => `
+      <li>
+        <span class="legend-rank">${i + 1}</span>
+        <span class="legend-name">${escapeHTML(r.name)}</span>
+        <span class="legend-amount">${money(r.total)}</span>
+        <span class="legend-meta">${r.count} ${r.count === 1 ? 'transaction' : 'transactions'}</span>
+        <span class="legend-bar"><i style="width:${max ? Math.max(4, Math.round(r.score / max * 100)) : 0}%"></i></span>
+      </li>`).join('');
+    return `<div class="legend-col">
+      <h3>${title}</h3>
+      <p class="legend-caption">${caption}</p>
+      ${rows.length ? `<ol class="legend-list">${items}</ol>` : `<p class="legend-empty">No entries yet</p>`}
+    </div>`;
+  };
+  legendsList.innerHTML = `<div class="legends-grid">
+    ${column('Top Lenders', 'Lent to Akib', top('owe'))}
+    ${column('Top Borrowers', 'Borrowed from Akib', top('get'))}
+  </div>
+  <p class="legend-note">Ranked by how often and how much.</p>`;
 }
 
 // Re-render from memory (no refetch) once the user or role is known
