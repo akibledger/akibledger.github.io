@@ -1661,6 +1661,11 @@ body.theme-bonita .matrix-modal-body .modal-btn.cancel { background: transparent
   body .history-link { order: 7; }
 }
 
+.page-quote { max-width: 1200px; margin: 0 auto; padding: 1rem 2rem 2.5rem; text-align: center; }
+.page-quote blockquote { max-width: 640px; margin: 0 auto; font-size: 0.9rem; font-style: italic; line-height: 1.5; color: var(--text-secondary); }
+body.theme-corporate .page-quote blockquote { font-family: var(--c-serif); }
+@media (max-width: 768px) { .page-quote { padding: 0.8rem 1rem 2rem; } }
+
 /* Theme picker buttons (all themes) */
 body .theme-choice-btn { line-height: 1.2; }
 body .theme-corporate-btn {

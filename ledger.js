@@ -414,7 +414,7 @@ function renderLegends(entries) {
     ${column('Top Lenders (Hall of Fame)', 'Lent to Akib', top('owe'))}
     ${column('Top Borrowers (Hall of Shame)', 'Borrowed from Akib', top('get'))}
   </div>
-  <p class="legend-note">Ranked by how often and how much.</p>`;
+  <p class="legend-note">Ranked by how often and how much. Score = transactions × √(total amount).</p>`;
 }
 
 // Re-render from memory (no refetch) once the user or role is known
