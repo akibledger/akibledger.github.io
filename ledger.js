@@ -355,6 +355,20 @@ function personKey(name) {
   return key || name.toLowerCase();
 }
 
+// Same person under genuinely different spellings: canonical name -> other names they appear under.
+// Names are matched with personKey, so capitalisation, emoji and punctuation don't matter here either.
+const PERSON_ALIASES = {
+  'Asgar': ['Asgar Azwad', 'Asgar Azward'],
+  'Fahmid': ['Fahmid (150k + interest)'],
+  'Tasnim Bin Anwar': ['Tasnim', 'Tasnim Bin Anwr'],
+  'Khalamoni': ['Khalamoni (Tanveer Bhai)'],
+  'Tarek Bhai': ['Tarek Bhau']
+};
+const aliasIndex = new Map();
+Object.entries(PERSON_ALIASES).forEach(([canonical, variants]) => {
+  [canonical, ...variants].forEach(name => aliasIndex.set(personKey(name), canonical));
+});
+
 // Legends: top 5 people, all time (paid and unpaid). Ranked mostly by how often they transact
 // with Akib (score = transactions x sqrt(total)), so one big one-off can't top the list alone.
 // "I get" entries are money Akib lent out; "I owe" entries are money Akib borrowed.
@@ -368,8 +382,9 @@ function renderLegends(entries) {
       const name = (e.name || '').trim();
       const amount = Number(e.amount);
       if (e.type !== type || !name || !Number.isFinite(amount)) return;
-      const key = personKey(name);
-      const row = totals.get(key) || { name, total: 0, count: 0 }; // entries arrive newest first, so the newest spelling wins
+      const canonical = aliasIndex.get(personKey(name));
+      const key = personKey(canonical || name);
+      const row = totals.get(key) || { name: canonical || name, total: 0, count: 0 }; // entries arrive newest first, so the newest spelling wins
       row.total += amount;
       row.count += 1;
       totals.set(key, row);
@@ -396,8 +411,8 @@ function renderLegends(entries) {
     </div>`;
   };
   legendsList.innerHTML = `<div class="legends-grid">
-    ${column('Top Lenders', 'Lent to Akib', top('owe'))}
-    ${column('Top Borrowers', 'Borrowed from Akib', top('get'))}
+    ${column('Top Lenders (Hall of Fame)', 'Lent to Akib', top('owe'))}
+    ${column('Top Borrowers (Hall of Shame)', 'Borrowed from Akib', top('get'))}
   </div>
   <p class="legend-note">Ranked by how often and how much.</p>`;
 }
